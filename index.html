@@ -102,10 +102,13 @@
         };
 
         window.addEventListener('hashchange', handleRoute);
-        window.addEventListener('load', handleRoute);
-
-        // 初始化 Lucide 圖示
-        lucide.createIcons();
+        window.addEventListener('load', () => {
+            handleRoute();
+            // 保護邏輯：確保 lucide 物件存在後再執行
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
     </script>
     <script type="module" src="js/app.js"></script>
 </body>

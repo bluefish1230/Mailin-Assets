@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-// ✅ 麥箖公司專屬 Firebase 設定
+// ✅ 麥箖公司專屬 Firebase 設定 (100% 匹配您的截圖)
 const firebaseConfig = {
     apiKey: "AIzaSyCJxxNG3cYTRUfQ0Dr074RfPGDoJ91hD98",
     authDomain: "company-sign.firebaseapp.com",
