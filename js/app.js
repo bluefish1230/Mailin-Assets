@@ -200,7 +200,7 @@ function renderAssetList() {
                     </div>
                     <div class="info-item">
                         <label>購買日期</label>
-                        <span>${asset.purchaseDate}</span>
+                        <span>${asset.purchase_date || '未設定'}</span>
                     </div>
                     <div class="info-item">
                         <label>規格</label>
@@ -209,10 +209,10 @@ function renderAssetList() {
                 </div>
                 <div class="card-footer-actions">
                     <button class="btn-action edit-btn" data-id="${asset.id}">
-                        <i data-lucide="edit-3"></i> 編輯
+                        <i data-lucide="edit-3"></i> <span>編輯</span>
                     </button>
                     <button class="btn-action delete-btn" data-id="${asset.id}">
-                        <i data-lucide="trash-2"></i> 刪除
+                        <i data-lucide="trash-2"></i> <span>刪除</span>
                     </button>
                 </div>
             </div>

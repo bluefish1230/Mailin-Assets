@@ -178,9 +178,20 @@ body {
     font-weight: 600;
 }
 
-.badge-pc { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-.badge-nb { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
-.badge-n { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.badge-pc {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.badge-nb {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
+}
+
+.badge-n {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
 
 .asset-id {
     font-size: 0.85rem;
@@ -221,9 +232,12 @@ body {
         width: 80px;
         padding: 2rem 0.5rem;
     }
-    .logo-text, .nav-links li span {
+
+    .logo-text,
+    .nav-links li span {
         display: none;
     }
+
     .nav-links li {
         justify-content: center;
         padding: 1rem;
@@ -234,8 +248,10 @@ body {
     .app-container {
         flex-direction: column;
     }
+
     .sidebar {
-        display: none; /* Hide on mobile by default */
+        display: none;
+        /* Hide on mobile by default */
         position: fixed;
         bottom: 0;
         left: 0;
@@ -247,14 +263,17 @@ body {
         border-right: none;
         border-top: 1px solid var(--border-color);
     }
+
     .nav-links {
         flex-direction: row;
         width: 100%;
         justify-content: space-around;
     }
+
     .content {
         padding: 1rem;
     }
+
     .top-bar {
         margin-bottom: 2rem;
     }
@@ -262,8 +281,15 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .section {
