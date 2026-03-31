@@ -10,20 +10,46 @@ const mockAssets = [
 
 // 初始化應用程式
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
     initNavigation();
     renderDashboard();
+
+    // 登入按鈕監聽
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            const pw = document.getElementById('adminPassword').value;
+            const error = document.getElementById('loginError');
+            if (pw === '671230') {
+                sessionStorage.setItem('isAdmin', 'true');
+                checkAuth();
+            } else {
+                error.classList.remove('hidden');
+            }
+        });
+    }
 
     // 手機版選單切換
     const mobileBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.querySelector('.sidebar');
     if (mobileBtn) {
         mobileBtn.addEventListener('click', () => {
-            sidebar.style.display = sidebar.style.display === 'flex' ? 'none' : 'flex';
+            sidebar.classList.toggle('active-sidebar');
         });
     }
 
     lucide.createIcons();
 });
+
+function checkAuth() {
+    const isAuth = sessionStorage.getItem('isAdmin');
+    const overlay = document.getElementById('loginOverlay');
+    if (isAuth === 'true') {
+        overlay.style.display = 'none';
+    } else {
+        overlay.style.display = 'flex';
+    }
+}
 
 // 導覽功能控制
 function initNavigation() {
@@ -142,7 +168,7 @@ function renderAssetList() {
                 </div>
                 <div class="card-actions">
                     <button class="btn-icon"><i data-lucide="edit-3"></i></button>
-                    <button class="btn-icon" onclick="alert('異動功能開發中...')"><i data-lucide="history"></i></button>
+                    <button class="btn-icon delete-btn" data-id="${asset.id}"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>
         `;
@@ -151,7 +177,29 @@ function renderAssetList() {
     html += '</div>';
     mainSection.innerHTML = html;
 
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            deleteAssetById(id);
+        });
+    });
+
     document.getElementById('addAssetBtn').addEventListener('click', renderAddAssetForm);
+}
+
+async function deleteAssetById(assetId) {
+    if (confirm(`確定要刪除資產 ${assetId} 嗎？此操作不可恢復！`)) {
+        try {
+            // FIREBASE_API.deleteAsset(assetId); 
+            // 為求 demo 流暢，先 mock 刪除本地陣列
+            const index = mockAssets.findIndex(a => a.id === assetId);
+            if (index > -1) mockAssets.splice(index, 1);
+            alert("資產已成功移除！");
+            renderAssetList();
+        } catch (e) {
+            alert("刪除失敗：" + e.message);
+        }
+    }
 }
 
 function renderAddAssetForm() {
@@ -304,6 +352,24 @@ function appendDashboardStyles() {
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .form-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-top: 1rem; }
         .specs-text { font-size: 0.8rem; opacity: 0.8; height: 2.4rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+        /* Login Interface */
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: var(--bg-surface-elevated); padding: 3rem; border-radius: 30px;
+            width: 100%; max-width: 400px; border: 1px solid var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;
+        }
+        .login-box h2 { margin-bottom: 2rem; font-weight: 700; color: var(--text-primary); }
+        .form-group-login { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; text-align: left; }
+        .form-group-login label { font-size: 0.85rem; color: var(--text-secondary); }
+        .form-group-login input { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: white; padding: 0.8rem; border-radius: 10px; font-size: 1rem; width: 100%; }
+        .error-text { color: var(--danger); margin-top: 1rem; font-size: 0.9rem; }
+        .hidden { display: none; }
     `;
     document.head.appendChild(style);
 }
