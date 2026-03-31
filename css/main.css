@@ -1,4 +1,4 @@
-/* Mailin Property Management System - Main Design Tokens */
+/* 麥箖公司財產管理系統 - 核心樣式表 v3.0 (穩定版) */
 :root {
     --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
     --bg-dark: #0f172a;
@@ -10,7 +10,7 @@
     --danger: #ef4444;
     --success: #22c55e;
     --border-color: rgba(255, 255, 255, 0.1);
-    --sidebar-width: 260px;
+    --sidebar-width: 250px;
 }
 
 * {
@@ -27,21 +27,23 @@ body {
     overflow-x: hidden;
 }
 
-/* Application Layout */
+/* 佈局架構 */
 .app-container {
     display: flex;
     min-height: 100vh;
+    width: 100%;
 }
 
-/* Sidebar */
+/* 側邊欄 */
 .sidebar {
     width: var(--sidebar-width);
+    flex-shrink: 0;
     background: var(--bg-surface);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     padding: 2rem 1.5rem;
-    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: 0.3s;
 }
 
 .logo {
@@ -82,6 +84,11 @@ body {
     margin-bottom: 0.5rem;
 }
 
+.nav-links li i {
+    width: 20px;
+    height: 20px;
+}
+
 .nav-links li:hover {
     background: rgba(255, 255, 255, 0.05);
     color: white;
@@ -93,18 +100,19 @@ body {
     box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
 }
 
-/* Main Content Area */
+/* 主內容區 */
 .main-content {
     flex-grow: 1;
     padding: 2rem 3rem;
-    background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.05), transparent 40%);
+    overflow-y: auto;
+    max-width: calc(100vw - var(--sidebar-width));
 }
 
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
 h1 {
@@ -112,70 +120,68 @@ h1 {
     font-weight: 700;
 }
 
-/* Cards & Grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+.header-left p {
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
 }
 
-.stat-card {
+.avatar {
+    background: var(--primary-gradient);
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+/* 通用組件 */
+.card {
     background: var(--bg-surface);
     padding: 2rem;
     border-radius: 20px;
     border: 1px solid var(--border-color);
-    transition: 0.3s;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(255, 255, 255, 0.2);
+.card h3 {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
 }
 
-.stat-card h3 {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.stat-card .count {
-    font-size: 2.5rem;
-    font-weight: 700;
-}
-
+/* 資產網格 */
 .asset-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
 }
 
 .asset-card {
     background: var(--bg-surface);
-    padding: 1.8rem;
-    border-radius: 24px;
+    padding: 1.5rem;
+    border-radius: 22px;
     border: 1px solid var(--border-color);
     position: relative;
     transition: 0.3s;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 .asset-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.5);
+    transform: translateY(-3px);
 }
 
 .asset-badge {
     position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    padding: 0.4rem 1rem;
+    top: 1.2rem;
+    right: 1.2rem;
+    padding: 0.3rem 0.8rem;
     border-radius: 30px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    text-transform: uppercase;
 }
 
 .badge-pc {
@@ -193,124 +199,16 @@ h1 {
     color: #f59e0b;
 }
 
-.asset-id {
-    color: #818cf8;
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-}
-
 .asset-name {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    margin-bottom: 1.5rem;
-    line-height: 1.2;
-    height: 3.4rem;
+    margin-top: 1rem;
+    margin-bottom: 1.2rem;
+    height: 3.2rem;
     overflow: hidden;
 }
 
-/* Buttons */
-.btn-primary {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-primary:active {
-    transform: scale(0.95);
-    opacity: 0.9;
-}
-
-/* Login Interface Overlay Styles */
-.login-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(20px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.login-box {
-    background: #1e293b;
-    padding: 2.5rem;
-    border-radius: 25px;
-    width: 95%;
-    max-width: 400px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    text-align: center;
-}
-
-.login-box h2 {
-    margin-bottom: 2rem;
-    font-weight: 700;
-    color: white;
-}
-
-.form-group-login {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    text-align: left;
-}
-
-.form-group-login label {
-    font-size: 0.85rem;
-    color: #94a3b8;
-}
-
-.form-group-login input {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 0.8rem;
-    border-radius: 10px;
-    font-size: 1rem;
-    width: 100%;
-}
-
-.error-text {
-    color: #f87171;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-}
-
-.hidden {
-    display: none;
-}
-
-/* Common UI Elements */
-.card {
-    background: var(--bg-surface);
-    padding: 2rem;
-    border-radius: 24px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.card h3 {
-    margin-bottom: 2rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: white;
-}
-
+/* 表單樣式 */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -326,10 +224,10 @@ h1 {
 .form-group textarea,
 .form-group select {
     width: 100%;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.25);
     border: 1px solid var(--border-color);
     color: white;
-    padding: 1rem;
+    padding: 0.8rem 1rem;
     border-radius: 12px;
     font-size: 1rem;
     transition: 0.3s;
@@ -338,19 +236,34 @@ h1 {
 .form-group input:focus {
     border-color: var(--accent);
     outline: none;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.35);
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .form-actions {
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
+}
+
+/* 動作按鈕 */
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: 0.3s;
 }
 
 .btn-outline {
@@ -363,37 +276,87 @@ h1 {
     transition: 0.3s;
 }
 
-.btn-outline:hover {
-    border-color: white;
-    color: white;
+.btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
 }
 
-.header-left p {
-    margin-top: 0.3rem;
+.card-footer-actions {
+    border-top: 1px solid var(--border-color);
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding-top: 1rem;
 }
 
-/* Mobile Navigation */
+.btn-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.btn-action.edit-btn {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+}
+
+.btn-action.delete-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+/* 登入遮罩 */
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(25px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-box {
+    background: #1e293b;
+    padding: 3rem;
+    border-radius: 28px;
+    width: 95%;
+    max-width: 420px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+/* 響應式調整 */
 .mobile-header {
     display: none;
     background: var(--bg-surface);
-    padding: 1rem 1.5rem;
+    padding: 1rem;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--border-color);
-    sticky: top;
-    z-index: 1000;
 }
 
 @media (max-width: 992px) {
     .sidebar {
         position: fixed;
-        left: -260px;
+        left: -250px;
         height: 100vh;
         z-index: 1001;
     }
 
     .sidebar.active-sidebar {
         left: 0;
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
     }
 
     .mobile-header {
@@ -402,13 +365,14 @@ h1 {
 
     .main-content {
         padding: 1.5rem;
+        max-width: 100vw;
+    }
+
+    .header-left h1 {
+        font-size: 1.6rem;
     }
 
     .stats-grid {
-        gap: 1rem;
-    }
-
-    .asset-grid {
         grid-template-columns: 1fr;
     }
 }
