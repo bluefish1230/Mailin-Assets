@@ -318,7 +318,7 @@ function renderSignatureManager() {
             <div class="selection-list">
                 ${mockAssets.map(a => `
                     <label class="checkbox-item">
-                        <input type="checkbox" value="${a.id}">
+                        <input type="checkbox" class="asset-checkbox" value="${a.id}">
                         <span>${a.id} - ${a.name} (${a.custodian})</span>
                     </label>
                 `).join('')}
@@ -328,14 +328,33 @@ function renderSignatureManager() {
         <div id="linkOutput" class="hidden">
             <p>請將此連結分享給使用者進行手機簽名：</p>
             <div class="generated-url">
-                <input type="text" readonly value="https://mailin-assets.github.io/sign#session-12345">
-                <button class="btn-icon"><i data-lucide="copy"></i></button>
+                <input type="text" id="finalSignUrl" readonly value="">
+                <button class="btn-icon" id="copyUrlBtn"><i data-lucide="copy"></i></button>
             </div>
         </div>
     `;
 
     document.getElementById('generateLinkBtn').addEventListener('click', () => {
+        const selectedIds = Array.from(document.querySelectorAll('.asset-checkbox:checked'))
+            .map(cb => cb.value);
+
+        if (selectedIds.length === 0) {
+            alert("請至少先勾選一項資產！");
+            return;
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const finalUrl = `${baseUrl}#sign/${selectedIds.join(',')}`;
+
+        document.getElementById('finalSignUrl').value = finalUrl;
         document.getElementById('linkOutput').classList.remove('hidden');
+    });
+
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+        const urlInput = document.getElementById('finalSignUrl');
+        urlInput.select();
+        document.execCommand('copy');
+        alert("連結已複製到剪貼簿！");
     });
 }
 
