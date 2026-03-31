@@ -33,8 +33,13 @@ const FIREBASE_API = {
     async addScrap(data) {
         return await addDoc(collection(db, "scrapping"), { ...data, timestamp: new Date() });
     },
-    async fetchScraps() {
-        const q = query(collection(db, "scrapping"), orderBy("timestamp", "desc"));
+    // --- 簽名紀錄 (Signatures) ---
+    async addSignature(data) {
+        return await addDoc(collection(db, "signatures"), { ...data, timestamp: new Date() });
+    },
+
+    async fetchSignatures() {
+        const q = query(collection(db, "signatures"), orderBy("timestamp", "desc"));
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }
