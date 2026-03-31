@@ -1,28 +1,53 @@
-// 麥箖公司財產清單 - Supabase 串接介面 (預留)
-// 提示：管理者需在環境變數中設定 SUPABASE_URL 與 SUPABASE_ANON_KEY
+// 麥箖公司財產清單 - Firebase 後端串接模組
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-const SUPABASE_API = {
-    url: 'YOUR_SUPABASE_PROJECT_URL',
-    key: 'YOUR_SUPABASE_ANON_KEY',
+// ⚠️ 請填入您的 Firebase 專案設定 ⚠️
+const firebaseConfig = {
+    apiKey: "AIzaSyCJxxNG3cYTRUfQ0Dr074RfPGDoJ91hD98", // 已填入您的 Key
+    authDomain: "company-sign.firebaseapp.com",
+    projectId: "company-sign",
+    storageBucket: "company-sign.appspot.com",
+    messagingSenderId: "您的發送者ID",
+    appId: "您的APP_ID"
+};
 
+// 初始化 Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const FIREBASE_API = {
+    // 取得所有資產
     async fetchAssets() {
-        console.log("正在從 Supabase 取得資產資料...");
-        // const { data, error } = await supabase.from('assets').select('*');
-        // return data;
-        return []; // 暫回空，待串接
+        try {
+            const q = query(collection(db, "assets"), orderBy("asset_no", "asc"));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (e) {
+            console.error("Fetch Error:", e);
+            throw e;
+        }
     },
 
-    async recordTransfer(assetId, from, to) {
-        console.log(`資產 ${assetId} 異動：${from} -> ${to}`);
-        // await supabase.from('transfer_logs').insert({ asset_id: assetId, prev_custodian: from, new_custodian: to });
+    // 新增資產
+    async addAsset(assetData) {
+        return await addDoc(collection(db, "assets"), assetData);
     },
 
-    async uploadSignature(dataURL, assetIds) {
-        console.log("上傳簽名影像至 Supabase Storage...");
-        // 1. 將 dataURL 轉為 Blob
-        // 2. 上傳至 'signatures' bucket
-        // 3. 更新 assets 及簽名關聯表
+    // 更新資產
+    async updateAsset(docId, updateData) {
+        const assetRef = doc(db, "assets", docId);
+        return await updateDoc(assetRef, updateData);
+    },
+
+    // 刪除資產
+    async deleteAsset(docId) {
+        const assetRef = doc(db, "assets", docId);
+        return await deleteDoc(assetRef);
     }
 };
 
-export default SUPABASE_API;
+export default FIREBASE_API;
