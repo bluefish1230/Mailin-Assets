@@ -1,0 +1,28 @@
+name: Sync Assets Data
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天凌晨執行一次
+  workflow_dispatch: # 支援手動觸發
+
+jobs:
+  export-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Export Data from Supabase
+        run: |
+          # 這裡模擬透過 curl 從 Supabase API 抓取資產資料
+          # 實際運作時需設定 SECRET: SUPABASE_URL, SUPABASE_ANON_KEY
+          echo '[{"id":"PC001","status":"synced"}]' > assets_snapshot.json
+          date > last_sync.txt
+
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add assets_snapshot.json last_sync.txt
+          git commit -m "chore: automated asset data snapshot $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git push

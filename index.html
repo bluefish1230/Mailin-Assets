@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麥箖公司財產清單</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+</head>
+
+<body class="dark-mode">
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i data-lucide="package" class="logo-icon"></i>
+                <span class="logo-text">麥箖公司</span>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-page="dashboard"><i data-lucide="layout-dashboard"></i> <span>總覽</span></li>
+                <li data-page="assets"><i data-lucide="list"></i> <span>資產列表</span></li>
+                <li data-page="signature"><i data-lucide="pen-tool"></i> <span>手寫簽名</span></li>
+                <li data-page="scrapping"><i data-lucide="trash-2"></i> <span>報廢管理</span></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header class="top-bar">
+                <div class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i data-lucide="menu"></i>
+                </div>
+                <h1 id="pageTitle">資產總覽</h1>
+                <div class="user-profile">
+                    <div class="avatar">Admin</div>
+                </div>
+            </header>
+
+            <section id="mainSection" class="section">
+                <!-- Content will be injected here -->
+                <div class="loading">正在載入資產資料...</div>
+            </section>
+        </main>
+
+        <!-- Signature Page Overlay (Mobile Sign) -->
+        <div id="signatureOverlay" class="overlay hidden">
+            <!-- Handled by signature.js -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { SignatureApp } from './js/signature.js';
+
+        // 簡易 hash 路由處理 (SPA 動態路由)
+        const handleRoute = () => {
+            const hash = window.location.hash;
+            const mainContent = document.querySelector('.content');
+            const signatureContainer = document.getElementById('signatureOverlay');
+
+            if (hash.startsWith('#sign')) {
+                // 進入簽名模式 (從 URL 解析帶入的資產 ID, 格式如: #sign/NB001,NB005)
+                const params = hash.includes('/') ? hash.split('/')[1] : 'NB001,NB005';
+                const assetIds = params.split(',').map(id => id.trim());
+
+                mainContent.style.display = 'none';
+                signatureContainer.style.display = 'block';
+                signatureContainer.classList.remove('hidden');
+
+                const app = new SignatureApp('signatureOverlay');
+                app.renderUI(assetIds);
+            } else {
+                // 恢復 Dashboard 模式
+                mainContent.style.display = 'block';
+                signatureContainer.style.display = 'none';
+                signatureContainer.classList.add('hidden');
+            }
+        };
+
+        window.addEventListener('hashchange', handleRoute);
+        window.addEventListener('load', handleRoute);
+
+        // 初始化 Lucide 圖示
+        lucide.createIcons();
+    </script>
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
