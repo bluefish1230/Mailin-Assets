@@ -1,12 +1,7 @@
 // 麥箖公司財產清單 - 主程式邏輯
 
-// 模擬資料 (Mock Data)
-const mockAssets = [
-    { id: 'PC001', name: '開發部工作站-01', specs: 'Intel i9 / 64GB / RTX 4090', location: '台北辦公室', purchaseDate: '2025-01-10', custodian: '張小明', category: 'PC' },
-    { id: 'NB001', name: '業務部筆電-01', specs: 'MacBook Pro M3 14"', location: '外派', purchaseDate: '2024-12-15', custodian: '李美美', category: 'NB' },
-    { id: 'NB002', name: '經理專用平板', specs: 'iPad Pro 12.9" 512GB', location: '主管辦公室', purchaseDate: '2025-03-01', custodian: '王大同', category: 'NB' },
-    { id: 'N001', name: '會議室投影機', specs: 'Epson 4K Projector', location: '大會議室', purchaseDate: '2024-11-20', custodian: '林總務', category: 'N' }
-];
+// 資料儲存 (全域變數 改為空，由 Firebase 載入)
+let assetsData = [];
 
 // 追蹤當前篩選類別
 let currentFilter = 'ALL';
@@ -15,7 +10,7 @@ let currentFilter = 'ALL';
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     initNavigation();
-    renderDashboard();
+    loadAssetsFromFirebase(); // 初始化時從雲端載入
 
     // 暴露回調給全域 (供 onclick 使用)
     window.updateFilter = (cat) => {
@@ -49,6 +44,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     lucide.createIcons();
 });
+
+async function loadAssetsFromFirebase() {
+    const mainSection = document.getElementById('mainSection');
+    mainSection.innerHTML = '<div class="loading">正在連線至雲端資料庫...</div>';
+
+    try {
+        const { default: api } = await import('./api.js');
+        assetsData = await api.fetchAssets();
+        renderAssetList();
+    } catch (e) {
+        console.error(e);
+        mainSection.innerHTML = `<div class="error">連線失敗：請檢查 api.js 中的 Firebase 設定是否完整。<br>${e.message}</div>`;
+    }
+}
 
 function checkAuth() {
     const isAuth = sessionStorage.getItem('isAdmin');
@@ -109,9 +118,9 @@ function switchPage(page) {
 // 渲染儀表板
 function renderDashboard() {
     const mainSection = document.getElementById('mainSection');
-    const pcCount = mockAssets.filter(a => a.category === 'PC').length;
-    const nbCount = mockAssets.filter(a => a.category === 'NB').length;
-    const nCount = mockAssets.filter(a => a.category === 'N').length;
+    const pcCount = assetsData.filter(a => a.category === 'PC').length;
+    const nbCount = assetsData.filter(a => a.category === 'NB').length;
+    const nCount = assetsData.filter(a => a.category === 'N').length;
 
     mainSection.innerHTML = `
         <div class="stats-grid">
@@ -129,16 +138,16 @@ function renderDashboard() {
             </div>
         </div>
         <div class="recent-activity">
-            <h2>最近異動紀錄</h2>
+            <h2>最近動態</h2>
             <ul class="activity-list">
-                <li><i data-lucide="refresh-cw"></i> <span>PC001 由 張小明 轉交至 王小華 (2026-03-30)</span></li>
-                <li><i data-lucide="plus-circle"></i> <span>新增資產 NB002 - 經理專用平板 (2026-03-31)</span></li>
+                <li><i data-lucide="info"></i> <span>請至資產列表管理您的財產資料。</span></li>
+                <li><i data-lucide="check-circle"></i> <span>資料已同步至 Firebase 雲端。</span></li>
             </ul>
         </div>
     `;
 
-    // 儀表板專用樣式 (動態加入或在 main.css 預留)
     appendDashboardStyles();
+    lucide.createIcons();
 }
 
 // 渲染資產列表
@@ -147,8 +156,8 @@ function renderAssetList() {
 
     // 篩選資產
     const filteredAssets = currentFilter === 'ALL'
-        ? mockAssets
-        : mockAssets.filter(a => a.category === currentFilter);
+        ? assetsData
+        : assetsData.filter(a => a.category === currentFilter);
 
     let html = `
         <div class="list-header-actions">
@@ -188,7 +197,7 @@ function renderAssetList() {
                     </div>
                 </div>
                 <div class="card-footer-actions">
-                    <button class="btn-action edit-btn" onclick="alert('編輯功能開發中...')">
+                    <button class="btn-action edit-btn" data-id="${asset.id}">
                         <i data-lucide="edit-3"></i> 編輯
                     </button>
                     <button class="btn-action delete-btn" data-id="${asset.id}">
@@ -202,6 +211,14 @@ function renderAssetList() {
     html += '</div>';
     mainSection.innerHTML = html;
 
+    // 綁定編輯與刪除事件
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            renderEditAssetForm(id);
+        });
+    });
+
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = e.currentTarget.getAttribute('data-id');
@@ -213,15 +230,13 @@ function renderAssetList() {
     lucide.createIcons();
 }
 
-async function deleteAssetById(assetId) {
-    if (confirm(`確定要刪除資產 ${assetId} 嗎？此操作不可恢復！`)) {
+async function deleteAssetById(docId) {
+    if (confirm(`確定要刪除此資產嗎？此操作將同步從雲端移除！`)) {
         try {
-            // FIREBASE_API.deleteAsset(assetId); 
-            // 為求 demo 流暢，先 mock 刪除本地陣列
-            const index = mockAssets.findIndex(a => a.id === assetId);
-            if (index > -1) mockAssets.splice(index, 1);
-            alert("資產已成功移除！");
-            renderAssetList();
+            const { default: api } = await import('./api.js');
+            await api.deleteAsset(docId);
+            alert("資產已成功從雲端刪除！");
+            loadAssetsFromFirebase();
         } catch (e) {
             alert("刪除失敗：" + e.message);
         }
@@ -279,22 +294,23 @@ function renderAddAssetForm() {
 
     const updateId = () => {
         const cat = catSelect.value;
-        const count = mockAssets.filter(a => a.category === cat).length + 1;
+        const count = assetsData.filter(a => a.category === cat).length + 1;
         idInput.value = `${cat}${String(count).padStart(3, '0')}`;
     };
 
     catSelect.addEventListener('change', updateId);
     updateId();
 
-    document.getElementById('saveAssetBtn').addEventListener('click', () => {
+    document.getElementById('saveAssetBtn').addEventListener('click', async () => {
         const newAsset = {
-            id: idInput.value,
+            asset_no: idInput.value,
             name: document.getElementById('assetNameInput').value,
             specs: document.getElementById('assetSpecsInput').value,
             location: document.getElementById('assetLocationInput').value,
-            purchaseDate: document.getElementById('assetDateInput').value,
+            purchase_date: document.getElementById('assetDateInput').value,
             custodian: document.getElementById('assetCustodianInput').value,
-            category: catSelect.value
+            category: catSelect.value,
+            status: '使用中'
         };
 
         if (!newAsset.name || !newAsset.custodian) {
@@ -302,9 +318,73 @@ function renderAddAssetForm() {
             return;
         }
 
-        mockAssets.push(newAsset);
-        alert(`資產 ${newAsset.id} 已建立！`);
-        switchPage('assets');
+        try {
+            const { default: api } = await import('./api.js');
+            await api.addAsset(newAsset);
+            alert(`雲端資產 ${newAsset.asset_no} 已建立！`);
+            loadAssetsFromFirebase();
+            switchPage('assets');
+        } catch (e) {
+            alert("儲存失敗：請確認 Firebase 有無正確連線。");
+        }
+    });
+}
+
+function renderEditAssetForm(docId) {
+    const asset = assetsData.find(a => a.id === docId);
+    if (!asset) return;
+
+    const mainSection = document.getElementById('mainSection');
+    mainSection.innerHTML = `
+        <div class="card add-form">
+            <h3>編輯資產：${asset.id}</h3>
+            <div class="form-group">
+                <label>資產名稱</label>
+                <input type="text" id="editNameInput" value="${asset.name}">
+            </div>
+            <div class="form-group">
+                <label>規格說明</label>
+                <textarea id="editSpecsInput" rows="3">${asset.specs}</textarea>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>存放地點</label>
+                    <input type="text" id="editLocationInput" value="${asset.location}">
+                </div>
+                <div class="form-group">
+                    <label>購買日期</label>
+                    <input type="date" id="editDateInput" value="${asset.purchaseDate}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>保管人</label>
+                <input type="text" id="editCustodianInput" value="${asset.custodian}">
+            </div>
+            <div class="form-actions">
+                <button class="btn-outline" onclick="switchPage('assets')">取消</button>
+                <button id="updateAssetBtn" class="btn-primary">更新資產</button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('updateAssetBtn').addEventListener('click', async () => {
+        const updateData = {
+            name: document.getElementById('editNameInput').value,
+            specs: document.getElementById('editSpecsInput').value,
+            location: document.getElementById('editLocationInput').value,
+            purchaseDate: document.getElementById('editDateInput').value,
+            custodian: document.getElementById('editCustodianInput').value
+        };
+
+        try {
+            const { default: api } = await import('./api.js');
+            await api.updateAsset(docId, updateData);
+            alert("雲端資料已同步更新！");
+            loadAssetsFromFirebase();
+            switchPage('assets');
+        } catch (e) {
+            alert("更新失敗：" + e.message);
+        }
     });
 }
 
