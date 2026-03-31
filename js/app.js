@@ -64,8 +64,20 @@ function checkAuth() {
     const overlay = document.getElementById('loginOverlay');
     if (isAuth === 'true') {
         overlay.style.display = 'none';
+        safeCreateIcons(); // 確保背景圖示也更新
     } else {
         overlay.style.display = 'flex';
+        safeCreateIcons();
+    }
+}
+
+// 終極修復：全域安全呼叫 Lucide
+function safeCreateIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    } else {
+        // 如果還沒載入，過 300 毫秒再試一次
+        setTimeout(safeCreateIcons, 300);
     }
 }
 
@@ -146,8 +158,7 @@ function renderDashboard() {
         </div>
     `;
 
-    appendDashboardStyles();
-    lucide.createIcons();
+    safeCreateIcons();
 }
 
 // 渲染資產列表
@@ -227,7 +238,7 @@ function renderAssetList() {
     });
 
     document.getElementById('addAssetBtn').addEventListener('click', renderAddAssetForm);
-    lucide.createIcons();
+    safeCreateIcons();
 }
 
 async function deleteAssetById(docId) {
