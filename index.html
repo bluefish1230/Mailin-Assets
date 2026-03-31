@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麥箖公司財產清單</title>
+    <title>麥箖公司財產管理系統</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,102 +15,116 @@
 </head>
 
 <body class="dark-mode">
+    <!-- 管理員登入遮罩 -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-box">
             <div class="logo">
-                <i data-lucide="shield-check"></i>
+                <i data-lucide="shield-check" style="width:40px; height:40px; color:#a855f7;"></i>
                 <span class="logo-text">管理系統</span>
             </div>
-            <h2>管理員登入</h2>
+            <h2>管理員身分驗證</h2>
             <div class="form-group-login">
                 <label>帳號：admin</label>
             </div>
             <div class="form-group-login">
-                <label>密碼</label>
-                <input type="password" id="adminPassword" placeholder="請輸入密碼">
+                <label>登入密碼</label>
+                <input type="password" id="adminPassword" placeholder="請輸入密碼 671230">
             </div>
-            <button id="loginBtn" class="btn-primary">進入系統</button>
+            <button id="loginBtn" class="btn-primary" style="width:100%; justify-content:center;">進入管理系統</button>
             <p id="loginError" class="hidden error-text">❌ 密碼錯誤，請重新輸入</p>
         </div>
     </div>
+
     <div class="app-container">
-        <!-- Sidebar / Navigation -->
+        <!-- 手機版 Header -->
+        <div class="mobile-header">
+            <div class="logo">
+                <span class="logo-text">麥箖公司</span>
+            </div>
+            <button id="mobileMenuBtn" class="btn-icon">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+
+        <!-- 側邊選單 -->
         <nav class="sidebar">
             <div class="logo">
                 <i data-lucide="package" class="logo-icon"></i>
-                <span class="logo-text">麥箖公司</span>
+                <span class="logo-text" style="font-size: 1.2rem;">麥箖公司</span>
             </div>
             <ul class="nav-links">
-                <li class="active" data-page="dashboard"><i data-lucide="layout-dashboard"></i> <span>總覽</span></li>
-                <li data-page="assets"><i data-lucide="list"></i> <span>資產列表</span></li>
-                <li data-page="signature"><i data-lucide="pen-tool"></i> <span>手寫簽名</span></li>
-                <li data-page="scrapping"><i data-lucide="trash-2"></i> <span>報廢管理</span></li>
+                <li class="active" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span>儀表板</span></li>
+                <li data-page="assets"><i data-lucide="database"></i><span>資產列表</span></li>
+                <li data-page="signature"><i data-lucide="pen-tool"></i><span>手寫簽名</span></li>
+                <li data-page="scrapping"><i data-lucide="trash-2"></i><span>報廢管理</span></li>
             </ul>
+            <div class="sidebar-footer">
+                <p style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">Mailin Assets v2.0</p>
+            </div>
         </nav>
 
-        <!-- Main Content -->
-        <main class="content">
-            <header class="top-bar">
-                <div class="mobile-menu-btn" id="mobileMenuBtn">
-                    <i data-lucide="menu"></i>
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <header>
+                <div class="header-left">
+                    <h1 id="pageTitle">系統總覽</h1>
+                    <p id="pageSubTitle" style="color: var(--text-secondary); font-size: 0.9rem;">歡迎回來，管理員</p>
                 </div>
-                <h1 id="pageTitle">資產總覽</h1>
                 <div class="user-profile">
                     <div class="avatar">Admin</div>
                 </div>
             </header>
 
-            <section id="mainSection" class="section">
-                <!-- Content will be injected here -->
-                <div class="loading">正在載入資產資料...</div>
+            <section id="mainSection" class="content-section">
+                <!-- 內容由 app.js 動態注入 -->
+                <div class="loading">正在讀取雲端資料...</div>
             </section>
         </main>
-
-        <!-- Signature Page Overlay (Mobile Sign) -->
-        <div id="signatureOverlay" class="overlay hidden">
-            <!-- Handled by signature.js -->
-        </div>
     </div>
 
-    <!-- Scripts -->
-    <script type="module">
-        import { SignatureApp } from './js/signature.js';
-
-        // 簡易 hash 路由處理 (SPA 動態路由)
+    <!-- 腳本區域 -->
+    <script>
+        // SPA 簡單路由切換
         const handleRoute = () => {
-            const hash = window.location.hash;
-            const mainContent = document.querySelector('.content');
-            const signatureContainer = document.getElementById('signatureOverlay');
+            const hash = window.location.hash || '#dashboard';
+            const pageTitle = document.getElementById('pageTitle');
 
+            // 如果是簽名模式，由 signature.js 處理
             if (hash.startsWith('#sign')) {
-                // 進入簽名模式 (從 URL 解析帶入的資產 ID, 格式如: #sign/NB001,NB005)
-                const params = hash.includes('/') ? hash.split('/')[1] : 'NB001,NB005';
-                const assetIds = params.split(',').map(id => id.trim());
-
-                mainContent.style.display = 'none';
-                signatureContainer.style.display = 'block';
-                signatureContainer.classList.remove('hidden');
-
-                const app = new SignatureApp('signatureOverlay');
-                app.renderUI(assetIds);
-            } else {
-                // 恢復 Dashboard 模式
-                mainContent.style.display = 'block';
-                signatureContainer.style.display = 'none';
-                signatureContainer.classList.add('hidden');
+                return;
             }
+
+            // 更新選單 Active 狀態
+            document.querySelectorAll('.nav-links li').forEach(li => {
+                li.classList.remove('active');
+                if (`#${li.getAttribute('data-page')}` === hash) li.classList.add('active');
+            });
         };
 
         window.addEventListener('hashchange', handleRoute);
         window.addEventListener('load', () => {
             handleRoute();
-            // 保護邏輯：確保 lucide 物件存在後再執行
-            if (window.lucide) {
-                window.lucide.createIcons();
-            }
+            if (window.lucide) window.lucide.createIcons();
         });
     </script>
     <script type="module" src="js/app.js"></script>
+    <style>
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 5rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .avatar {
+            background: var(--primary-gradient);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+    </style>
 </body>
 
 </html>
