@@ -47,7 +47,23 @@ const FIREBASE_API = {
     async deleteAsset(docId) {
         const assetRef = doc(db, "assets", docId);
         return await deleteDoc(assetRef);
-    }
-};
+    // --- 報廢紀錄 (Scrapping) ---
+    async addScrap(data) {
+            try {
+                await addDoc(collection(db, "scrapping"), {
+                    ...data,
+                    created_at: new Date()
+                });
+            } catch (e) { throw e; }
+        },
 
-export default FIREBASE_API;
+    async fetchScraps() {
+            try {
+                const q = query(collection(db, "scrapping"), orderBy("created_at", "desc"));
+                const querySnapshot = await getDocs(q);
+                return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (e) { throw e; }
+        }
+    };
+
+    export default FIREBASE_API;
