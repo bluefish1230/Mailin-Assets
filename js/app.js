@@ -8,11 +8,20 @@ const mockAssets = [
     { id: 'N001', name: '會議室投影機', specs: 'Epson 4K Projector', location: '大會議室', purchaseDate: '2024-11-20', custodian: '林總務', category: 'N' }
 ];
 
+// 追蹤當前篩選類別
+let currentFilter = 'ALL';
+
 // 初始化應用程式
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     initNavigation();
     renderDashboard();
+
+    // 暴露回調給全域 (供 onclick 使用)
+    window.updateFilter = (cat) => {
+        currentFilter = cat;
+        renderAssetList();
+    };
 
     // 登入按鈕監聽
     const loginBtn = document.getElementById('loginBtn');
@@ -135,14 +144,26 @@ function renderDashboard() {
 // 渲染資產列表
 function renderAssetList() {
     const mainSection = document.getElementById('mainSection');
+
+    // 篩選資產
+    const filteredAssets = currentFilter === 'ALL'
+        ? mockAssets
+        : mockAssets.filter(a => a.category === currentFilter);
+
     let html = `
-        <div class="list-header">
-            <button id="addAssetBtn" class="btn-primary" style="width: auto; margin-bottom: 2rem;">+ 新增資產</button>
+        <div class="list-header-actions">
+            <div class="filter-tabs">
+                <button class="tab ${currentFilter === 'ALL' ? 'active' : ''}" onclick="window.updateFilter('ALL')">全部</button>
+                <button class="tab ${currentFilter === 'PC' ? 'active' : ''}" onclick="window.updateFilter('PC')">電腦 (PC)</button>
+                <button class="tab ${currentFilter === 'NB' ? 'active' : ''}" onclick="window.updateFilter('NB')">平板筆電 (NB)</button>
+                <button class="tab ${currentFilter === 'N' ? 'active' : ''}" onclick="window.updateFilter('N')">其它 (N)</button>
+            </div>
+            <button id="addAssetBtn" class="btn-primary" style="width: auto;">+ 新增資產</button>
         </div>
         <div class="asset-grid">
     `;
 
-    mockAssets.forEach(asset => {
+    filteredAssets.forEach(asset => {
         html += `
             <div class="asset-card">
                 <span class="asset-badge badge-${asset.category.toLowerCase()}">${asset.category}</span>
@@ -151,7 +172,7 @@ function renderAssetList() {
                 <div class="asset-info">
                     <div class="info-item">
                         <label>保管人</label>
-                        <span>${asset.custodian}</span>
+                        <span><strong>${asset.custodian}</strong></span>
                     </div>
                     <div class="info-item">
                         <label>地點</label>
@@ -166,9 +187,13 @@ function renderAssetList() {
                         <span class="specs-text">${asset.specs}</span>
                     </div>
                 </div>
-                <div class="card-actions">
-                    <button class="btn-icon"><i data-lucide="edit-3"></i></button>
-                    <button class="btn-icon delete-btn" data-id="${asset.id}"><i data-lucide="trash-2"></i></button>
+                <div class="card-footer-actions">
+                    <button class="btn-action edit-btn" onclick="alert('編輯功能開發中...')">
+                        <i data-lucide="edit-3"></i> 編輯
+                    </button>
+                    <button class="btn-action delete-btn" data-id="${asset.id}">
+                        <i data-lucide="trash-2"></i> 刪除
+                    </button>
                 </div>
             </div>
         `;
@@ -185,6 +210,7 @@ function renderAssetList() {
     });
 
     document.getElementById('addAssetBtn').addEventListener('click', renderAddAssetForm);
+    lucide.createIcons();
 }
 
 async function deleteAssetById(assetId) {
@@ -352,6 +378,19 @@ function appendDashboardStyles() {
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .form-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-top: 1rem; }
         .specs-text { font-size: 0.8rem; opacity: 0.8; height: 2.4rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+        /* Enhanced List & Actions */
+        .list-header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .filter-tabs { display: flex; background: rgba(0,0,0,0.2); padding: 0.4rem; border-radius: 12px; gap: 0.4rem; }
+        .tab { background: transparent; border: none; color: var(--text-secondary); padding: 0.5rem 1.2rem; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 0.85rem; }
+        .tab.active { background: var(--primary-gradient); color: white; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+
+        .card-footer-actions { border-top: 1px solid var(--border-color); margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; padding-top: 1rem; }
+        .btn-action { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.3s; }
+        .btn-action.edit-btn { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+        .btn-action.delete-btn { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+        .btn-action:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .btn-action i { width: 16px; height: 16px; }
 
         /* Login Interface */
         .login-overlay {
