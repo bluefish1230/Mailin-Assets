@@ -14,7 +14,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const FIREBASE_API = {
-    // 資產 CRUD
+    // --- 資產 (Assets) ---
     async addAsset(data) {
         return await addDoc(collection(db, "assets"), data);
     },
@@ -29,15 +29,21 @@ const FIREBASE_API = {
     async deleteAsset(id) {
         return await deleteDoc(doc(db, "assets", id));
     },
-    // 報廢紀錄 CRUD
+
+    // --- 報廢 (Scrapping) ---
     async addScrap(data) {
         return await addDoc(collection(db, "scrapping"), { ...data, timestamp: new Date() });
     },
-    // --- 簽名紀錄 (Signatures) ---
+    async fetchScraps() {
+        const q = query(collection(db, "scrapping"), orderBy("timestamp", "desc"));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+
+    // --- 簽名 (Signatures) ---
     async addSignature(data) {
         return await addDoc(collection(db, "signatures"), { ...data, timestamp: new Date() });
     },
-
     async fetchSignatures() {
         const q = query(collection(db, "signatures"), orderBy("timestamp", "desc"));
         const snap = await getDocs(q);
