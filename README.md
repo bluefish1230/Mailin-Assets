@@ -1,35 +1,44 @@
-# 麥箖公司財產清單 - 在線管理系統
+# 麥箖公司財產清單 - 雲端管理系統 (Mailin Assets)
 
-本專案為麥箖公司開發的「回應式財產清單管理系統」，支援桌機、平板、手機跨平台檢視，具備自動資產編號、異動紀錄、報廢管理與手寫簽名功能。
+本專案為麥箖公司開發的「回應式財產清單管理系統」，支援桌機、平板、手機跨平台檢視。系統整合了 Firebase 雲端資料庫，具備資產編號自動跳號、雲端報廢管理、管理員權限登入、以及手機手寫確認簽收功能。
 
 ## ✨ 核心特色
-*   **現代化 RWD 介面**：採用 Dark Mode 與毛玻璃設計（Glassmorphism），體驗流暢且外觀高端。
-*   **資產分類編碼**：
+*   **雲端動態同步**：採用 Firebase Firestore，資產的新增、編輯與報廢皆即時寫入雲端。
+*   **管理員權限保護**：進入系統須通過身分驗證，預設密碼為 `671230`。
+*   **資產分類編碼 (自動跳號)**：
     *   `PC`：電腦 (PC001...)
     *   `NB`：筆電/平板 (NB001...)
     *   `N`：其它類別 (N001...)
-*   **數位手寫簽名**：管理者可批次勾選資產，產生專屬簽名連結，使用者開案即可手寫確認簽收。
-*   **資料版本管控**：定期將資產快照同步至 GitHub，保留完整異動歷史。
+*   **手寫簽名連結**：管理員可批次勾選資產，產生專屬手機簽名連結，使用者開案即可手寫確認簽收。
+*   **報廢清冊管理**：獨立的報廢流程，詳細紀錄原因、處置方式與日期。
 
 ## 🚀 部署指引
 
-### 1. 前端預覽
+### 1. 前端預覽與發佈
 1. 本專案使用 Vanilla HTML/JS/CSS，無需額外編譯。
-2. 將 `d:/ai/Assets` 所有內容上傳至 GitHub 儲存庫。
-3. 至 `Settings > Pages` 開啟 GitHub Pages 即可上線。
+2. 將所有檔案上傳至 GitHub 儲存庫 `Mailin-Assets`。
+3. 在 GitHub 儲存庫設定中前往 `Settings > Pages`。
+4. 將 `Build and deployment > Branch` 設為 `main` 分支後儲存。
+5. 稍等片刻，即可透過生成的 GitHub Pages 網址進行操作。
 
-### 2. 後端串接 (Supabase)
-1. 至 [Supabase](https://supabase.com/) 註冊並建立專案。
-2. 建立 `assets`, `transfer_logs`, `scrapping_logs`, `signature_sessions` 資料表。
-3. 修改 `js/api.js` 並填入專案 URL 與 ANON_KEY。
-4. 設定 GitHub Secrets 供 `sync_data.yml` 使用以達成自動同步。
-
-## 📋 系統規格書
-詳細的需求與技術規劃請參閱 [系統開發規格書](./system_specification.md)。
+### 2. 資料庫設定 (Firebase)
+1. 專案已預先設定好由 `js/api.js` 連線至 Firebase。
+2. 資料儲存在 **Cloud Firestore** 的兩個 Collection：
+    *   `assets`：存放所有在使用中的資產。
+    *   `scrapping`：存放所有已報廢的紀錄。
+3. **Firestore 規則設定建議** (開發測試期)：
+    ```javascript
+    allow read, write: if request.time < timestamp.date(2026, 4, 30);
+    ```
 
 ## 🛠️ 技術棧
-*   **範拉 HTML/CSS/JS**
-*   **Lucide Icons** (向量圖示)
-*   **Signature Pad** (手寫簽名)
-*   **Supabase** (後端 API 與存儲)
-*   **GitHub Actions** (資料版本同步)
+*   **前端介面**：HTML5, CSS3 (Vanilla), JavaScript (ES Modules)
+*   **UI/UX 設計**：深色模式 (Dark Mode), 毛玻璃 (Glassmorphism), RWD 響應式佈局
+*   **圖示庫**：Lucide Icons
+*   **後端雲端**：Firebase Firestore
+*   **版本控制**：GitHub (Version Control)
+
+## 📋 系統規格
+*   **管理員帳號**：`admin`
+*   **管理員密碼**：`671230`
+*   **資產字段**：品名、保管人、存放地點、購買日期、規格說明、資產編號。
