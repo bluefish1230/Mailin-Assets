@@ -14,48 +14,29 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const FIREBASE_API = {
-    // --- 資產管理 (Assets) ---
+    // 資產 CRUD
     async addAsset(data) {
-        try {
-            const docRef = await addDoc(collection(db, "assets"), data);
-            return docRef.id;
-        } catch (e) { throw e; }
+        return await addDoc(collection(db, "assets"), data);
     },
-
     async fetchAssets() {
-        try {
-            const q = query(collection(db, "assets"), orderBy("asset_no", "asc"));
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } catch (e) { throw e; }
+        const q = query(collection(db, "assets"), orderBy("asset_no", "asc"));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     },
-
-    async updateAsset(docId, data) {
-        const assetRef = doc(db, "assets", docId);
-        return await updateDoc(assetRef, data);
+    async updateAsset(id, data) {
+        return await updateDoc(doc(db, "assets", id), data);
     },
-
-    async deleteAsset(docId) {
-        const assetRef = doc(db, "assets", docId);
-        return await deleteDoc(assetRef);
+    async deleteAsset(id) {
+        return await deleteDoc(doc(db, "assets", id));
     },
-
-    // --- 報廢紀錄 (Scrapping) ---
+    // 報廢紀錄 CRUD
     async addScrap(data) {
-        try {
-            await addDoc(collection(db, "scrapping"), {
-                ...data,
-                created_at: new Date()
-            });
-        } catch (e) { throw e; }
+        return await addDoc(collection(db, "scrapping"), { ...data, timestamp: new Date() });
     },
-
     async fetchScraps() {
-        try {
-            const q = query(collection(db, "scrapping"), orderBy("created_at", "desc"));
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } catch (e) { throw e; }
+        const q = query(collection(db, "scrapping"), orderBy("timestamp", "desc"));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }
 };
 
