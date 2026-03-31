@@ -2,14 +2,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-// ⚠️ 請填入您的 Firebase 專案設定 ⚠️
+// ✅ 麥箖公司專屬 Firebase 設定
 const firebaseConfig = {
-    apiKey: "AIzaSyCJxxNG3cYTRUfQ0Dr074RfPGDoJ91hD98", // 已填入您的 Key
+    apiKey: "AIzaSyCJxxNG3cYTRUfQ0Dr074RfPGDoJ91hD98",
     authDomain: "company-sign.firebaseapp.com",
     projectId: "company-sign",
-    storageBucket: "company-sign.appspot.com",
-    messagingSenderId: "您的發送者ID",
-    appId: "您的APP_ID"
+    storageBucket: "company-sign.firebasestorage.app",
+    messagingSenderId: "990145383182",
+    appId: "1:990145383182:web:35131a6a9e76d99381255f"
 };
 
 // 初始化 Firebase
