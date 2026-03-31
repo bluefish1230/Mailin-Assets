@@ -4,6 +4,7 @@ import FIREBASE_API from './api.js';
 let assetsData = [];
 let scrapData = [];
 let signData = [];
+let transfersData = [];
 let currentFilter = 'ALL';
 let searchQuery = '';
 let selectedAssets = new Set();
@@ -36,6 +37,7 @@ async function handleRouting() {
             case '#signature': renderSignManager(main, title); break;
             case '#scrapping': renderScrapping(main, title); break;
             case '#sign-history': renderSignHistory(main, title); break;
+            case '#transfers': renderTransferHistory(main, title); break;
             case '#add-asset': renderAddAsset(main, title); break;
             default: renderDashboard(main, title);
         }
@@ -49,6 +51,7 @@ async function refreshData() {
         assetsData = await FIREBASE_API.fetchAssets();
         scrapData = await FIREBASE_API.fetchScraps();
         signData = await FIREBASE_API.fetchSignatures();
+        transfersData = await FIREBASE_API.fetchTransfers();
     } catch (e) { console.error(e); }
 }
 
@@ -192,7 +195,13 @@ function renderSignMode(ids) {
 // 其餘功能模組不變 ...
 function renderDashboard(main, title) {
     title.innerText = '儀表板';
-    main.innerHTML = `<div class="stats-grid"><div class="stat-card"><h3>在用資產</h3><p class="count">${assetsData.length}</p></div><div class="stat-card"><h3>報廢總數</h3><p class="count">${scrapData.length}</p></div><div class="stat-card"><h3>點收存單</h3><p class="count">${signData.length}</p></div></div>`;
+    main.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card"><h3>在用資產</h3><p class="count">${assetsData.length}</p></div>
+            <div class="stat-card"><h3>報廢總數</h3><p class="count">${scrapData.length}</p></div>
+            <div class="stat-card"><h3>點收存單</h3><p class="count">${signData.length}</p></div>
+            <div class="stat-card" style="border-color:var(--accent);"><h3>異動紀錄</h3><p class="count">${transfersData.length}</p></div>
+        </div>`;
 }
 
 function renderAddAsset(main, title) {
@@ -207,8 +216,51 @@ function renderAddAsset(main, title) {
 
 function renderEditPage(id) {
     const a = assetsData.find(x => x.id === id);
-    document.getElementById('mainSection').innerHTML = `<div class="card"><h3>編輯資產：${a.asset_no}</h3><input type="text" id="en" value="${a.name}"><button class="btn-primary" id="uB">儲存</button></div>`;
-    document.getElementById('uB').onclick = async () => { await FIREBASE_API.updateAsset(id, { name: document.getElementById('en').value }); alert("OK"); await refreshData(); window.location.hash = '#assets'; };
+    if (!a) return;
+
+    document.getElementById('pageTitle').innerText = `編輯資產：${a.asset_no}`;
+    document.getElementById('mainSection').innerHTML = `
+        <div class="card">
+            <h3 style="margin-bottom:2rem;">資產內容修訂</h3>
+            <div class="form-group">
+                <label>品名</label>
+                <input type="text" id="en" value="${a.name}">
+            </div>
+            <div class="form-group">
+                <label>保管人 (異動將紀錄至日誌)</label>
+                <input type="text" id="eu" value="${a.custodian}">
+            </div>
+            <div class="form-group">
+                <label>地點</label>
+                <input type="text" id="el" value="${a.location || ''}">
+            </div>
+            <div class="form-actions">
+                <button class="btn-primary" id="uB" style="flex:1; justify-content:center;">儲存變更</button>
+                <button class="btn-outline" onclick="window.location.hash='#assets'" style="flex:1;">取消</button>
+            </div>
+        </div>`;
+
+    document.getElementById('uB').onclick = async () => {
+        const newName = document.getElementById('en').value;
+        const newCustodian = document.getElementById('eu').value;
+        const newLocation = document.getElementById('el').value;
+
+        // 如果保管人有變更，紀錄異動
+        if (newCustodian !== a.custodian) {
+            await FIREBASE_API.addTransfer({
+                asset_no: a.asset_no,
+                name: a.name,
+                from: a.custodian,
+                to: newCustodian,
+                reason: '手動修改'
+            });
+        }
+
+        await FIREBASE_API.updateAsset(id, { name: newName, custodian: newCustodian, location: newLocation });
+        alert("✅ 資料更新成功！");
+        await refreshData();
+        window.location.hash = '#assets';
+    };
 }
 
 function renderScrapping(main, title) {
@@ -266,6 +318,38 @@ function renderSignHistory(main, title) {
     `;
 }
 
+function renderTransferHistory(main, title) {
+    title.innerText = '保管人異動明細';
+    main.innerHTML = `
+        <div class="card" style="padding:0; overflow:hidden;">
+            <table class="data-table" style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#1e293b; text-align:left;">
+                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">時間</th>
+                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">資產編號 / 品名</th>
+                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">原保管人</th>
+                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">→ 新保管人</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${transfersData.map(t => `
+                        <tr>
+                            <td style="padding:15px; border-bottom:1px solid var(--border-color); font-size:0.85rem; color:var(--text-secondary);">${t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : 'N/A'}</td>
+                            <td style="padding:15px; border-bottom:1px solid var(--border-color);">
+                                <div style="font-family:monospace; color:var(--accent);">${t.asset_no}</div>
+                                <div style="font-size:0.8rem;">${t.name}</div>
+                            </td>
+                            <td style="padding:15px; border-bottom:1px solid var(--border-color); color:var(--danger);">${t.from || '-'}</td>
+                            <td style="padding:15px; border-bottom:1px solid var(--border-color); color:var(--success); font-weight:700;">${t.to}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            ${transfersData.length === 0 ? '<p style="padding:40px; text-align:center; color:var(--text-secondary);">尚未有異動紀錄</p>' : ''}
+        </div>
+    `;
+}
+
 function renderSignManager(main, title) {
     title.innerText = '產生點收連結';
     main.innerHTML = `<div class="card"><h3>資產清單</h3>${assetsData.map(a => `<p><input type="checkbox" class="sc" value="${a.asset_no}"> ${a.asset_no}</p>`).join('')}<button class="btn-primary" id="gB">建立網址</button><div id="uz" class="hidden"><code id="uv"></code></div></div>`;
@@ -309,6 +393,16 @@ function initNavigation() {
         try {
             const list = Array.from(selectedAssets);
             for (const id of list) {
+                const a = assetsData.find(x => x.id === id);
+                if (a && a.custodian !== newVal) {
+                    await FIREBASE_API.addTransfer({
+                        asset_no: a.asset_no,
+                        name: a.name,
+                        from: a.custodian,
+                        to: newVal,
+                        reason: '批次異動'
+                    });
+                }
                 await FIREBASE_API.updateAsset(id, { custodian: newVal });
             }
             alert("✅ 批次變更成功");

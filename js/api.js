@@ -48,6 +48,16 @@ const FIREBASE_API = {
         const q = query(collection(db, "signatures"), orderBy("timestamp", "desc"));
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+
+    // --- 異動紀錄 (Transfers) ---
+    async addTransfer(data) {
+        return await addDoc(collection(db, "transfers"), { ...data, timestamp: new Date() });
+    },
+    async fetchTransfers() {
+        const q = query(collection(db, "transfers"), orderBy("timestamp", "desc"));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }
 };
 
