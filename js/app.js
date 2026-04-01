@@ -123,7 +123,7 @@ function renderAssetList(main, title) {
                     </div>
                     <div class="card-footer-actions" style="margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:10px;">
                         <button class="btn-action edit-btn" style="flex:1;" onclick="window.location.hash='#edit/${a.id}'"><i data-lucide="edit-3"></i><span>編輯</span></button>
-                        <button class="btn-action" style="flex:1; color:#fdba74;" onclick="sessionStorage.setItem('st','${a.id}');window.location.hash='#add-scrap'"><i data-lucide="archive"></i><span>報廢</span></button>
+                        <button class="btn-action" style="flex:1; color:#fdba74;" onclick="window.scrapAsset('${a.id}')"><i data-lucide="archive"></i><span>報廢</span></button>
                         <button class="btn-action delete-btn" style="width:45px; flex:none;" onclick="window.deleteAsset('${a.id}')" title="永久刪除"><i data-lucide="trash-2"></i></button>
                     </div>
                 </div>`;
@@ -377,19 +377,24 @@ function renderScrapping(main, title) {
             <table class="data-table" style="width:100%; border-collapse:collapse;">
                 <thead>
                     <tr style="background:#1e293b; text-align:left;">
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">資產編號</th>
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">品名</th>
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">報廢日期</th>
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">狀態</th>
+                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">編號/品名</th>
+                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">規格</th>
+                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">採購日期</th>
+                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">報廢時間</th>
+                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">狀態</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${scrapData.map(s => `
                         <tr>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color); font-family:monospace;">${s.asset_no}</td>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color);">${s.name}</td>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color); color:var(--text-secondary);">${s.timestamp?.toDate ? s.timestamp.toDate().toLocaleString() : 'N/A'}</td>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color);"><span style="background:rgba(239,68,68,0.1); color:#ef4444; padding:2px 10px; border-radius:20px; font-size:0.8rem;">已報廢</span></td>
+                            <td style="padding:12px; border-bottom:1px solid var(--border-color);">
+                                <div style="font-family:monospace; color:var(--accent);">${s.asset_no}</div>
+                                <div style="font-size:0.85rem;">${s.name}</div>
+                            </td>
+                            <td style="padding:12px; border-bottom:1px solid var(--border-color); font-size:0.85rem;">${s.spec || '-'}</td>
+                            <td style="padding:12px; border-bottom:1px solid var(--border-color); font-size:0.85rem;">${s.purchase_date || '-'}</td>
+                            <td style="padding:12px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); font-size:0.85rem;">${s.timestamp?.toDate ? s.timestamp.toDate().toLocaleString() : 'N/A'}</td>
+                            <td style="padding:12px; border-bottom:1px solid var(--border-color);"><span style="background:rgba(239,68,68,0.1); color:#ef4444; padding:2px 10px; border-radius:20px; font-size:0.75rem;">已報廢</span></td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -549,7 +554,7 @@ function initNavigation() {
             for (const id of list) {
                 const a = assetsData.find(x => x.id === id);
                 if (a) {
-                    await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name });
+                    await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name, spec: a.spec || '', purchase_date: a.purchase_date || '' });
                     await FIREBASE_API.deleteAsset(id);
                 }
             }
@@ -558,6 +563,18 @@ function initNavigation() {
             await refreshData();
             renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
         } catch (e) { alert("報廢過程出錯: " + e.message); }
+    };
+
+    window.scrapAsset = async (id) => {
+        const a = assetsData.find(x => x.id === id);
+        if (!confirm(`確定要將資產 ${a.asset_no} (${a.name}) 報廢嗎？`)) return;
+        try {
+            await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name, spec: a.spec || '', purchase_date: a.purchase_date || '' });
+            await FIREBASE_API.deleteAsset(id);
+            alert("報廢成功");
+            await refreshData();
+            renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+        } catch (e) { alert("報廢失敗"); }
     };
 
     window.clearAllDatabaseRecords = async () => {
