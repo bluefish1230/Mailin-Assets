@@ -1,4 +1,4 @@
-// 麥箖公司財產清單 - 手寫簽名模組
+// 公司財產清單 - 手寫簽名模組
 import SignaturePad from 'https://cdn.jsdelivr.net/npm/signature_pad@5.0.2/+esm';
 
 export class SignatureApp {

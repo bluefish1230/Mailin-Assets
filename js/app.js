@@ -1,4 +1,4 @@
-/* 麥箖公司財產管理系統 - 核心引擎 v14.0 (視覺強化版) */
+/* 公司資產管理系統 - 核心引擎 v14.0 (視覺強化版) */
 import FIREBASE_API from './api.js';
 
 let assetsData = [];
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
     initNavigation();
     const mainSection = document.getElementById('mainSection');
-    mainSection.innerHTML = '<div class="loading">正在連結麥箖雲端庫...</div>';
+    mainSection.innerHTML = '<div class="loading">正在連結雲端資料庫...</div>';
     await refreshData();
     window.addEventListener('hashchange', handleRouting);
     handleRouting();
