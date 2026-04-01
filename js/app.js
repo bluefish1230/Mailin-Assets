@@ -75,7 +75,12 @@ function renderAssetList(main, title) {
     main.innerHTML = `
         <div class="list-header-actions" style="display:flex; flex-direction:column; gap:20px; margin-bottom:25px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                <div class="filter-tabs">${['ALL', 'PC', 'NB', 'N'].map(c => `<button class="tab ${currentFilter === c ? 'active' : ''}" onclick="window.setFilter('${c}')">${c}</button>`).join('')}</div>
+                <div class="filter-tabs">
+                    ${['ALL', 'PC', 'NB', 'N'].map(c => {
+        const count = c === 'ALL' ? assetsData.length : assetsData.filter(a => a.category === c).length;
+        return `<button class="tab ${currentFilter === c ? 'active' : ''}" onclick="window.setFilter('${c}')">${c} <span style="opacity:0.6; margin-left:4px; font-size:0.8rem;">(${count})</span></button>`;
+    }).join('')}
+                </div>
                 <div class="search-box" style="position:relative; flex-grow:1; max-width:400px;">
                     <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; color:var(--text-secondary);"></i>
                     <input type="text" id="assetSearch" placeholder="搜尋保管人、品名或編號..." value="${searchQuery}" style="padding-left:40px; width:100%; height:45px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; color:white;">
@@ -97,8 +102,8 @@ function renderAssetList(main, title) {
             </div>
             
             <div style="display:flex; align-items:center; padding-left:15px;">
-                <input type="checkbox" id="selectAll" ${filtered.length > 0 && Array.from(selectedAssets).length >= filtered.length ? 'checked' : ''} onclick="window.toggleSelectAll(this.checked)" style="width:18px; height:18px; cursor:pointer;">
-                <label for="selectAll" style="margin-left:10px; cursor:pointer; font-size:0.9rem; color:var(--text-secondary);">全選目前列表</label>
+                <input type="checkbox" id="selectAll" ${filtered.length > 0 && filtered.every(a => selectedAssets.has(a.id)) ? 'checked' : ''} onclick="window.toggleSelectAll(this.checked)" style="width:18px; height:18px; cursor:pointer;">
+                <label for="selectAll" style="margin-left:10px; cursor:pointer; font-size:0.9rem; color:var(--text-secondary);">全選目前列表 (${filtered.length})</label>
             </div>
         </div>
 
@@ -533,7 +538,13 @@ function initNavigation() {
 
     window.toggleSelectAll = (checked) => {
         const filtered = currentFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === currentFilter);
-        const searchFiltered = searchQuery ? filtered.filter(a => (a.custodian || '').toLowerCase().includes(searchQuery.toLowerCase()) || (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (a.asset_no || '').toLowerCase().includes(searchQuery.toLowerCase())) : filtered;
+        const q = searchQuery.toLowerCase();
+        const searchFiltered = searchQuery ? filtered.filter(a =>
+            (a.custodian || '').toLowerCase().includes(q) ||
+            (a.name || '').toLowerCase().includes(q) ||
+            (a.asset_no || '').toLowerCase().includes(q) ||
+            (a.location || '').toLowerCase().includes(q)
+        ) : filtered;
 
         if (checked) searchFiltered.forEach(a => selectedAssets.add(a.id));
         else searchFiltered.forEach(a => selectedAssets.delete(a.id));
