@@ -63,7 +63,13 @@ function renderAssetList(main, title) {
 
     let filtered = currentFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === currentFilter);
     if (searchQuery) {
-        filtered = filtered.filter(a => (a.custodian || '').toLowerCase().includes(searchQuery.toLowerCase()) || (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (a.asset_no || '').toLowerCase().includes(searchQuery.toLowerCase()));
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(a =>
+            (a.custodian || '').toLowerCase().includes(q) ||
+            (a.name || '').toLowerCase().includes(q) ||
+            (a.asset_no || '').toLowerCase().includes(q) ||
+            (a.location || '').toLowerCase().includes(q)
+        );
     }
 
     main.innerHTML = `
@@ -464,8 +470,51 @@ function renderTransferHistory(main, title) {
 
 function renderSignManager(main, title) {
     title.innerText = '產生點收連結';
-    main.innerHTML = `<div class="card"><h3>資產清單</h3>${assetsData.map(a => `<p><input type="checkbox" class="sc" value="${a.asset_no}"> ${a.asset_no}</p>`).join('')}<button class="btn-primary" id="gB">建立網址</button><div id="uz" class="hidden"><code id="uv"></code></div></div>`;
-    document.getElementById('gB').onclick = () => { const ids = Array.from(document.querySelectorAll('.sc:checked')).map(i => i.value); const url = `${window.location.origin}${window.location.pathname}#sign/${ids.join(',')}`; document.getElementById('uv').innerText = url; document.getElementById('uz').classList.remove('hidden'); navigator.clipboard.writeText(url); alert("複製成功"); };
+    let smFilter = 'ALL';
+
+    const redraw = () => {
+        const list = smFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === smFilter);
+        main.innerHTML = `
+            <div class="card">
+                <div style="margin-bottom:20px;">
+                    <h3 style="margin-bottom:15px;">1. 篩選資產類別</h3>
+                    <div class="filter-tabs">
+                        ${['ALL', 'PC', 'NB', 'N'].map(c => `<button class="tab ${smFilter === c ? 'active' : ''}" id="smf-${c}">${c}</button>`).join('')}
+                    </div>
+                </div>
+                <div style="margin-bottom:25px; max-height:400px; overflow-y:auto; border:1px solid var(--border-color); border-radius:12px; padding:15px; background:rgba(0,0,0,0.1);">
+                    <h3 style="margin-bottom:15px;">2. 勾選資產編號</h3>
+                    ${list.length === 0 ? '<p style="color:var(--text-secondary); text-align:center;">該分類下無資產</p>' : list.map(a => `
+                        <label style="display:flex; align-items:center; gap:12px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; color:#e2e8f0;">
+                            <input type="checkbox" class="sc" value="${a.asset_no}" style="width:18px; height:18px;">
+                            <span style="font-family:monospace; color:var(--accent);">${a.asset_no}</span>
+                            <span style="font-size:0.9rem;">- ${a.name}</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <button class="btn-primary" id="gB" style="width:100%; justify-content:center; height:50px;">3. 建立並複製點收網址</button>
+                <div id="uz" class="hidden" style="margin-top:20px; padding:15px; background:rgba(34,197,94,0.1); border-radius:12px; border:1px solid #22c55e;">
+                    <p style="color:#22c55e; font-size:0.85rem; font-weight:700; margin-bottom:10px;">✅ 網址已複製到剪貼簿</p>
+                    <code id="uv" style="word-break:break-all; font-size:0.8rem; color:#86efac;"></code>
+                </div>
+            </div>
+        `;
+
+        ['ALL', 'PC', 'NB', 'N'].forEach(c => {
+            document.getElementById(`smf-${c}`).onclick = () => { smFilter = c; redraw(); };
+        });
+
+        document.getElementById('gB').onclick = () => {
+            const ids = Array.from(document.querySelectorAll('.sc:checked')).map(i => i.value);
+            if (ids.length === 0) return alert("請至少勾選一個資產");
+            const url = `${window.location.origin}${window.location.pathname}#sign/${ids.join(',')}`;
+            document.getElementById('uv').innerText = url;
+            document.getElementById('uz').classList.remove('hidden');
+            navigator.clipboard.writeText(url);
+        };
+    };
+
+    redraw();
 }
 
 function checkAuth() { sessionStorage.getItem('isAdmin') === 'true' ? document.getElementById('loginOverlay').style.display = 'none' : document.getElementById('loginOverlay').style.display = 'flex'; }
