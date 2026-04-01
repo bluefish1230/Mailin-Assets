@@ -45,26 +45,21 @@ export class SignatureApp {
         });
 
         const resizeCanvas = () => {
-            // 備份現有內容
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             const data = this.signaturePad.toData();
 
-            // 重新設定寬高
             const rect = this.canvas.getBoundingClientRect();
             this.canvas.width = rect.width * ratio;
             this.canvas.height = rect.height * ratio;
             this.canvas.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
 
-            // 重要：重新初始化內容
             this.signaturePad.clear();
             this.signaturePad.fromData(data);
         };
 
-        // 使用 ResizeObserver 替代 window resize 以精確追蹤容器變化
         const ro = new ResizeObserver(() => resizeCanvas());
         ro.observe(this.canvas.parentElement);
 
-        // 初次觸發
         setTimeout(resizeCanvas, 100);
     }
 
@@ -93,29 +88,157 @@ export class SignatureApp {
         const style = document.createElement('style');
         style.id = 'signature-styles';
         style.textContent = `
-            .sign-viewport { display: flex; flex-direction: column; min-height: 100dvh; padding: 2.5rem; background: var(--bg-dark); box-sizing: border-box; }
-            .sign-header { margin-bottom: 2rem; text-align: center; }
-            .sign-header h1 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--primary); }
-            .asset-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-bottom: 0.5rem; }
-            .chip { background: var(--bg-surface-elevated); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--border-color); }
-            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; margin: 0 1rem 2rem 1rem; overflow: hidden; background: rgba(255, 255, 255, 0.95); min-height: 140px; max-height: 35dvh; }
-            #signatureCanvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
-            .canvas-hint { position: absolute; bottom: 0.5rem; left: 0; width: 100%; text-align: center; color: #666; pointer-events: none; font-size: 0.75rem; opacity: 0.5; }
-            .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 0 1rem 2rem 1rem; }
-            .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.8rem; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-            .btn-primary { padding: 0.8rem; font-size: 0.9rem; }
+            /* ── 直向（預設）── */
+            .sign-viewport {
+                display: flex;
+                flex-direction: column;
+                min-height: 100dvh;
+                padding: 1.5rem;
+                background: var(--bg-dark);
+                box-sizing: border-box;
+                gap: 0.75rem;
+            }
 
-            /* 橫向模式專屬優化 */
+            .sign-header {
+                text-align: center;
+            }
+            .sign-header h1 {
+                font-size: 1.2rem;
+                margin: 0 0 0.3rem;
+                color: var(--primary);
+            }
+            .sign-header p {
+                font-size: 0.85rem;
+                margin: 0 0 0.5rem;
+            }
+
+            .asset-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.4rem;
+                justify-content: center;
+            }
+            .chip {
+                background: var(--bg-surface-elevated);
+                padding: 0.2rem 0.6rem;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                border: 1px solid var(--border-color);
+            }
+
+            .canvas-container {
+                flex: 1;
+                position: relative;
+                border: 2px dashed rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
+                overflow: hidden;
+                background: rgba(255, 255, 255, 0.95);
+                min-height: 120px;
+                max-height: 25dvh;
+            }
+            #signatureCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+                cursor: crosshair;
+            }
+            .canvas-hint {
+                position: absolute;
+                bottom: 0.5rem;
+                left: 0;
+                width: 100%;
+                text-align: center;
+                color: #666;
+                pointer-events: none;
+                font-size: 0.75rem;
+                opacity: 0.5;
+            }
+
+            .sign-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            .btn-outline {
+                background: transparent;
+                border: 1px solid var(--border-color);
+                color: var(--text-primary);
+                padding: 0.8rem;
+                border-radius: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 0.9rem;
+            }
+            .btn-primary {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            /* ── 橫向模式 ── */
             @media (orientation: landscape) and (max-height: 600px) {
-                .sign-viewport { padding: 1.5rem 2rem; flex-direction: row; align-items: stretch; gap: 2rem; }
-                .sign-header { width: 180px; margin-bottom: 0; text-align: left; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border-color); padding-right: 1.5rem; }
-                .sign-header h1 { font-size: 1.1rem; margin-bottom: 0.3rem; }
-                .sign-header p { font-size: 0.8rem; margin-bottom: 0.5rem; }
-                .asset-chips { justify-content: flex-start; }
-                .canvas-container { margin: 0; min-height: 80px; max-height: 60dvh; flex: 2; height: 100%; border-radius: 12px; }
-                .sign-actions { width: 150px; grid-template-columns: 1fr; flex-direction: column; padding: 0; align-self: center; gap: 1rem; }
-                .btn-outline, .btn-primary { padding: 0.6rem; font-size: 0.85rem; }
-                .canvas-hint { bottom: 0.3rem; }
+                .sign-viewport {
+                    padding: 1rem 1.25rem;
+                    flex-direction: column;
+                    gap: 0.6rem;
+                }
+
+                /* header 變成單行橫排 */
+                .sign-header {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 0.75rem;
+                    text-align: left;
+                    margin: 0;
+                    border-right: none;
+                    padding-right: 0;
+                }
+                .sign-header h1 {
+                    font-size: 1rem;
+                    margin: 0;
+                    white-space: nowrap;
+                }
+                .sign-header p {
+                    font-size: 0.8rem;
+                    margin: 0;
+                    white-space: nowrap;
+                }
+                .asset-chips {
+                    flex-wrap: nowrap;
+                    justify-content: flex-start;
+                    margin: 0;
+                }
+
+                /* 按鈕移入 header 右側 */
+                .sign-actions {
+                    display: contents;
+                }
+                /* spacer 把按鈕推到右側 */
+                .asset-chips + .sign-actions,
+                .sign-header .spacer {
+                    flex: 1;
+                }
+                .sign-header::after {
+                    content: '';
+                    flex: 1;
+                }
+                .btn-outline,
+                .btn-primary {
+                    padding: 0.45rem 1rem;
+                    font-size: 0.85rem;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                }
+
+                /* 簽名框：固定高度，不撐滿 */
+                .canvas-container {
+                    flex: none;
+                    height: 45dvh;
+                    max-height: none;
+                    margin: 0 4rem;
+                    min-height: 0;
+                    border-radius: 12px;
+                }
             }
         `;
         document.head.appendChild(style);
