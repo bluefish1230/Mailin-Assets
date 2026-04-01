@@ -275,13 +275,17 @@ function renderAddAsset(main, title) {
         </div>`;
     document.getElementById('sS').onclick = async () => {
         const category = document.getElementById('nc').value;
-        // 自動生成編號：類別(PC/NB/N) + 四位數流水號
+        // 自動生成編號：類別(PC/NB/N) + 三位數流水號 (需包含已報廢的資產)
         const prefix = category;
-        const samePrefixAssets = assetsData.filter(a => a.asset_no && a.asset_no.startsWith(prefix));
+        const allRelevant = [
+            ...assetsData.filter(a => a.asset_no && a.asset_no.startsWith(prefix)),
+            ...scrapData.filter(s => s.asset_no && s.asset_no.startsWith(prefix))
+        ];
+
         let nextNumber = 1;
-        if (samePrefixAssets.length > 0) {
-            const numbers = samePrefixAssets.map(a => {
-                const numStr = a.asset_no.replace(prefix, '').replace('-', '');
+        if (allRelevant.length > 0) {
+            const numbers = allRelevant.map(item => {
+                const numStr = item.asset_no.replace(prefix, '').replace('-', '');
                 return parseInt(numStr);
             }).filter(n => !isNaN(n));
             if (numbers.length > 0) nextNumber = Math.max(...numbers) + 1;
