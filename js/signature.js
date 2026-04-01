@@ -93,27 +93,27 @@ export class SignatureApp {
         const style = document.createElement('style');
         style.id = 'signature-styles';
         style.textContent = `
-            .sign-viewport { display: flex; flex-direction: column; min-height: 100dvh; padding: 1.5rem; background: var(--bg-dark); box-sizing: border-box; }
-            .sign-header { margin-bottom: 1.5rem; text-align: center; }
+            .sign-viewport { display: flex; flex-direction: column; min-height: 100dvh; padding: 2.5rem; background: var(--bg-dark); box-sizing: border-box; }
+            .sign-header { margin-bottom: 2rem; text-align: center; }
             .sign-header h1 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--primary); }
             .asset-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-bottom: 0.5rem; }
             .chip { background: var(--bg-surface-elevated); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--border-color); }
-            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; margin-bottom: 1rem; overflow: hidden; background: rgba(0,0,0,0.2); min-height: 140px; max-height: 35dvh; }
+            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; margin: 0 1rem 2rem 1rem; overflow: hidden; background: rgba(255, 255, 255, 0.95); min-height: 140px; max-height: 35dvh; }
             #signatureCanvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
-            .canvas-hint { position: absolute; bottom: 0.5rem; left: 0; width: 100%; text-align: center; color: var(--text-secondary); pointer-events: none; font-size: 0.75rem; opacity: 0.5; }
-            .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-bottom: 1rem; }
+            .canvas-hint { position: absolute; bottom: 0.5rem; left: 0; width: 100%; text-align: center; color: #666; pointer-events: none; font-size: 0.75rem; opacity: 0.5; }
+            .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 0 1rem 2rem 1rem; }
             .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.8rem; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
             .btn-primary { padding: 0.8rem; font-size: 0.9rem; }
 
             /* 橫向模式專屬優化 */
             @media (orientation: landscape) and (max-height: 600px) {
-                .sign-viewport { padding: 0.5rem 1rem; flex-direction: row; align-items: stretch; gap: 1rem; }
-                .sign-header { width: 180px; margin-bottom: 0; text-align: left; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border-color); padding-right: 1rem; }
+                .sign-viewport { padding: 1.5rem 2rem; flex-direction: row; align-items: stretch; gap: 2rem; }
+                .sign-header { width: 180px; margin-bottom: 0; text-align: left; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border-color); padding-right: 1.5rem; }
                 .sign-header h1 { font-size: 1.1rem; margin-bottom: 0.3rem; }
                 .sign-header p { font-size: 0.8rem; margin-bottom: 0.5rem; }
                 .asset-chips { justify-content: flex-start; }
-                .canvas-container { margin-bottom: 0; min-height: 80px; max-height: 60dvh; flex: 2; height: 100%; }
-                .sign-actions { width: 150px; grid-template-columns: 1fr; flex-direction: column; padding-bottom: 0; align-self: center; }
+                .canvas-container { margin: 0; min-height: 80px; max-height: 60dvh; flex: 2; height: 100%; border-radius: 12px; }
+                .sign-actions { width: 150px; grid-template-columns: 1fr; flex-direction: column; padding: 0; align-self: center; gap: 1rem; }
                 .btn-outline, .btn-primary { padding: 0.6rem; font-size: 0.85rem; }
                 .canvas-hint { bottom: 0.3rem; }
             }
