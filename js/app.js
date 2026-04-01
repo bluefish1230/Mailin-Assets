@@ -11,8 +11,8 @@ let selectedAssets = new Set();
 let signaturePad = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    checkAuth();
     initNavigation();
+    checkAuth();
     const mainSection = document.getElementById('mainSection');
     mainSection.innerHTML = '<div class="loading">正在連結雲端資料庫...</div>';
     await refreshData();
@@ -726,10 +726,37 @@ function renderSignManager(main, title) {
     redraw();
 }
 
-function checkAuth() { sessionStorage.getItem('isAdmin') === 'true' ? document.getElementById('loginOverlay').style.display = 'none' : document.getElementById('loginOverlay').style.display = 'flex'; }
+function checkAuth() {
+    const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+    const overlay = document.getElementById('loginOverlay');
+    if (isAdmin) {
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+    } else {
+        overlay.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+    }
+}
 
 function initNavigation() {
-    document.getElementById('loginBtn').onclick = () => { if (document.getElementById('adminPassword').value === '671230') { sessionStorage.setItem('isAdmin', 'true'); checkAuth(); } else { document.getElementById('loginError').classList.remove('hidden'); } };
+    const loginBtn = document.getElementById('loginBtn');
+    const passwordInput = document.getElementById('adminPassword');
+    const loginError = document.getElementById('loginError');
+
+    if (loginBtn) {
+        loginBtn.onclick = () => {
+            if (passwordInput.value === '671230') {
+                sessionStorage.setItem('isAdmin', 'true');
+                loginError.classList.add('hidden');
+                checkAuth();
+            } else {
+                loginError.classList.remove('hidden');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        };
+        // 支援 Enter 鍵登入
+        passwordInput.onkeypress = (e) => { if (e.key === 'Enter') loginBtn.click(); };
+    }
 }
 
 // 全域輔助函數
