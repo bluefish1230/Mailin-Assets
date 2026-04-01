@@ -40,19 +40,32 @@ export class SignatureApp {
         this.canvas = document.getElementById('signatureCanvas');
         this.signaturePad = new SignaturePad(this.canvas, {
             backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            penColor: '#6366f1'
+            penColor: '#6366f1',
+            velocityFilterWeight: 0.7
         });
 
         const resizeCanvas = () => {
+            // 備份現有內容
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            this.canvas.width = this.canvas.offsetWidth * ratio;
-            this.canvas.height = this.canvas.offsetHeight * ratio;
-            this.canvas.getContext("2d").scale(ratio, ratio);
+            const data = this.signaturePad.toData();
+
+            // 重新設定寬高
+            const rect = this.canvas.getBoundingClientRect();
+            this.canvas.width = rect.width * ratio;
+            this.canvas.height = rect.height * ratio;
+            this.canvas.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
+
+            // 重要：重新初始化內容
             this.signaturePad.clear();
+            this.signaturePad.fromData(data);
         };
 
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
+        // 使用 ResizeObserver 替代 window resize 以精確追蹤容器變化
+        const ro = new ResizeObserver(() => resizeCanvas());
+        ro.observe(this.canvas.parentElement);
+
+        // 初次觸發
+        setTimeout(resizeCanvas, 100);
     }
 
     initButtons() {
@@ -80,12 +93,12 @@ export class SignatureApp {
         const style = document.createElement('style');
         style.id = 'signature-styles';
         style.textContent = `
-            .sign-viewport { display: flex; flex-direction: column; height: 100vh; padding: 2rem; background: var(--bg-dark); }
+            .sign-viewport { display: flex; flex-direction: column; min-height: 100dvh; padding: 2rem; background: var(--bg-dark); }
             .sign-header { margin-bottom: 2rem; text-align: center; }
             .sign-header h1 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary); }
-            .asset-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+            .asset-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
             .chip { background: var(--bg-surface-elevated); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--border-color); }
-            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 20px; margin-bottom: 2rem; overflow: hidden; background: rgba(0,0,0,0.2); }
+            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 20px; margin-bottom: 1.5rem; overflow: hidden; background: rgba(0,0,0,0.2); min-height: 250px; }
             #signatureCanvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
             .canvas-hint { position: absolute; bottom: 1rem; left: 0; width: 100%; text-align: center; color: var(--text-secondary); pointer-events: none; font-size: 0.8rem; opacity: 0.5; }
             .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-bottom: 2rem; }
