@@ -92,7 +92,7 @@ export class SignatureApp {
             .sign-viewport {
                 display: flex;
                 flex-direction: column;
-                min-height: 100dvh;
+                min-height: 90dvh;
                 padding: 1.5rem;
                 background: var(--bg-dark);
                 box-sizing: border-box;
@@ -137,8 +137,8 @@ export class SignatureApp {
                 max-height: 25dvh;
             }
             #signatureCanvas {
-                width: 100%;
-                height: 100%;
+                width: 90%;
+                height: 90%;
                 touch-action: none;
                 cursor: crosshair;
             }
@@ -146,7 +146,7 @@ export class SignatureApp {
                 position: absolute;
                 bottom: 0.5rem;
                 left: 0;
-                width: 100%;
+                width: 90%;
                 text-align: center;
                 color: #666;
                 pointer-events: none;
@@ -233,9 +233,9 @@ export class SignatureApp {
                 /* 簽名框：固定高度，不撐滿 */
                 .canvas-container {
                     flex: none;
-                    height: 45dvh;
+                    height: 40dvh;
                     max-height: none;
-                    margin: 0 4rem;
+                    margin: 4rem 8rem;
                     min-height: 0;
                     border-radius: 12px;
                 }
