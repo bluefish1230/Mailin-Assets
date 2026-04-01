@@ -276,13 +276,12 @@ function renderAddAsset(main, title) {
         let nextNumber = 1;
         if (samePrefixAssets.length > 0) {
             const numbers = samePrefixAssets.map(a => {
-                const parts = a.asset_no.split('-');
-                const numStr = parts.length > 1 ? parts[1] : a.asset_no.replace(prefix, '');
+                const numStr = a.asset_no.replace(prefix, '').replace('-', '');
                 return parseInt(numStr);
             }).filter(n => !isNaN(n));
             if (numbers.length > 0) nextNumber = Math.max(...numbers) + 1;
         }
-        const no = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
+        const no = `${prefix}${nextNumber.toString().padStart(3, '0')}`;
 
         const data = {
             asset_no: no,
