@@ -269,17 +269,31 @@ function renderAddAsset(main, title) {
             <button class="btn-primary" id="sS" style="width:100%; justify-content:center; margin-top:20px;">確認儲存資產</button>
         </div>`;
     document.getElementById('sS').onclick = async () => {
-        const no = `ASSET${Date.now().toString().slice(-4)}`;
+        const category = document.getElementById('nc').value;
+        // 自動生成編號：類別(PC/NB/N) + 四位數流水號
+        const prefix = category;
+        const samePrefixAssets = assetsData.filter(a => a.asset_no && a.asset_no.startsWith(prefix));
+        let nextNumber = 1;
+        if (samePrefixAssets.length > 0) {
+            const numbers = samePrefixAssets.map(a => {
+                const parts = a.asset_no.split('-');
+                const numStr = parts.length > 1 ? parts[1] : a.asset_no.replace(prefix, '');
+                return parseInt(numStr);
+            }).filter(n => !isNaN(n));
+            if (numbers.length > 0) nextNumber = Math.max(...numbers) + 1;
+        }
+        const no = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
+
         const data = {
             asset_no: no,
-            category: document.getElementById('nc').value,
+            category: category,
             name: document.getElementById('nn').value,
             custodian: document.getElementById('nu').value,
             location: document.getElementById('nl').value,
             purchase_date: document.getElementById('npd').value
         };
         await FIREBASE_API.addAsset(data);
-        alert("成功！"); await refreshData(); window.location.hash = '#assets';
+        alert(`✅ 資產登記成功！編號為 ${no}`); await refreshData(); window.location.hash = '#assets';
     };
 }
 
