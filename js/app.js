@@ -77,14 +77,15 @@ function renderAssetList(main, title) {
                 <button class="btn-primary" onclick="window.location.hash='#add-asset'">+ 新增資產</button>
             </div>
             
-            <div id="batchActions" class="card" style="margin-bottom:0; padding:15px 25px; display:${selectedAssets.size > 0 ? 'flex' : 'none'}; align-items:center; justify-content:space-between; background:rgba(99, 102, 241, 0.1); border-color:var(--accent);">
+            <div id="batchActions" class="card" style="margin-bottom:0; padding:15px 25px; display:${selectedAssets.size > 0 ? 'flex' : 'none'}; align-items:center; justify-content:space-between; background:rgba(99, 102, 241, 0.1); border-color:var(--accent); flex-wrap:wrap; gap:15px;">
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span style="font-weight:600; color:var(--accent);">已選取 ${selectedAssets.size} 項資產</span>
                     <button class="btn-outline" style="padding:5px 15px; font-size:0.8rem;" onclick="window.clearSelection()">取消全選</button>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="newCustodian" placeholder="輸入新保管人" style="width:180px; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:white;">
-                    <button class="btn-primary" style="padding:8px 20px; font-size:0.9rem;" onclick="window.batchUpdateCustodian()">變更保管人</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <input type="text" id="newCustodian" placeholder="新保管人" style="width:140px; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:white;">
+                    <input type="text" id="newLocation" placeholder="新地點" style="width:140px; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:white;">
+                    <button class="btn-primary" style="padding:8px 20px; font-size:0.9rem;" onclick="window.batchUpdateAssets()">執行批次異動</button>
                     <button class="btn-action" style="background:#ef4444; color:white; padding:8px 20px;" onclick="window.batchScrap()"><i data-lucide="trash-2"></i><span>批次報廢</span></button>
                 </div>
             </div>
@@ -122,6 +123,7 @@ function renderAssetList(main, title) {
                     <div class="card-footer-actions" style="margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:10px;">
                         <button class="btn-action edit-btn" style="flex:1;" onclick="window.location.hash='#edit/${a.id}'"><i data-lucide="edit-3"></i><span>編輯</span></button>
                         <button class="btn-action" style="flex:1; color:#fdba74;" onclick="sessionStorage.setItem('st','${a.id}');window.location.hash='#add-scrap'"><i data-lucide="archive"></i><span>報廢</span></button>
+                        <button class="btn-action delete-btn" style="width:45px; flex:none;" onclick="window.deleteAsset('${a.id}')" title="永久刪除"><i data-lucide="trash-2"></i></button>
                     </div>
                 </div>`;
     }).join('')}
@@ -203,11 +205,36 @@ function renderSignMode(ids) {
     document.getElementById('saveBtn').onclick = async () => {
         if (signaturePad.isEmpty()) { alert("請先完成簽署"); return; }
         const b = document.getElementById('saveBtn'); b.innerText = '雲端存檔中...'; b.disabled = true;
+        const imgData = signaturePad.toDataURL();
         try {
-            await FIREBASE_API.addSignature({ item_ids: ids.join(','), signature_img: signaturePad.toDataURL() });
-            alert("✅ 點收完成！"); window.location.href = './';
+            await FIREBASE_API.addSignature({ item_ids: ids.join(','), signature_img: imgData });
+            renderSignSuccess(ids, imgData);
         } catch (e) { alert("上傳失敗"); b.innerText = '本人確認送出'; b.disabled = false; }
     };
+}
+
+function renderSignSuccess(ids, img) {
+    document.body.innerHTML = `
+        <div style="background:#0f172a; color:white; min-height:100vh; padding:35px; display:flex; justify-content:center; align-items:center;">
+            <div class="card" style="max-width:500px; width:100%; text-align:center; animation: fadeIn 0.5s ease-out;">
+                <div style="margin-bottom:25px;">
+                    <i data-lucide="check-circle" style="width:64px; height:64px; color:#22c55e; margin:0 auto 15px;"></i>
+                    <h2 style="color:#22c55e;">資產點收成功！</h2>
+                    <p style="color:var(--text-secondary); margin-top:10px;">感謝您的配合，簽署紀錄已加密存檔</p>
+                </div>
+                <div style="background:#1e293b; border-radius:15px; padding:20px; margin-bottom:25px; border:1px solid var(--border-color); text-align:left;">
+                    <div style="color:var(--accent); font-size:0.8rem; font-weight:600; margin-bottom:5px;">簽收單據預覽</div>
+                    <div style="font-size:1rem; font-weight:700; margin-bottom:5px;">簽收編號: ${ids.join(', ')}</div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:15px;">時間: ${new Date().toLocaleString()}</div>
+                    <div style="background:white; border-radius:10px; padding:10px; display:flex; justify-content:center;">
+                        <img src="${img}" style="max-width:100%; height:120px; object-fit:contain;">
+                    </div>
+                </div>
+                <button class="btn-primary" style="width:100%; justify-content:center;" onclick="window.location.href='./'">回到系統首頁</button>
+            </div>
+        </div>
+    `;
+    safeCreateIcons();
 }
 
 // 其餘功能模組不變 ...
@@ -432,16 +459,24 @@ function initNavigation() {
         renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
     };
 
-    window.batchUpdateCustodian = async () => {
+    window.batchUpdateAssets = async () => {
         const newVal = document.getElementById('newCustodian').value;
-        if (!newVal) return alert("請輸入新保管人名稱");
-        if (!confirm(`確定要將這 ${selectedAssets.size} 項資產的保管人變更為「${newVal}」嗎？`)) return;
+        const newLoc = document.getElementById('newLocation').value;
+        if (!newVal && !newLoc) return alert("請至少輸入一項（新保管人或新地點）");
+
+        let confirmMsg = `確定要將這 ${selectedAssets.size} 項資產進行異動嗎？`;
+        if (newVal) confirmMsg += `\n- 新保管人: ${newVal}`;
+        if (newLoc) confirmMsg += `\n- 新地點: ${newLoc}`;
+
+        if (!confirm(confirmMsg)) return;
 
         try {
             const list = Array.from(selectedAssets);
             for (const id of list) {
                 const a = assetsData.find(x => x.id === id);
-                if (a && a.custodian !== newVal) {
+                const updateData = {};
+                if (newVal && a.custodian !== newVal) {
+                    updateData.custodian = newVal;
                     await FIREBASE_API.addTransfer({
                         asset_no: a.asset_no,
                         name: a.name,
@@ -450,13 +485,28 @@ function initNavigation() {
                         reason: '批次異動'
                     });
                 }
-                await FIREBASE_API.updateAsset(id, { custodian: newVal });
+                if (newLoc) updateData.location = newLoc;
+
+                if (Object.keys(updateData).length > 0) {
+                    await FIREBASE_API.updateAsset(id, updateData);
+                }
             }
             alert("✅ 批次變更成功");
             selectedAssets.clear();
             await refreshData();
             renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
         } catch (e) { alert("變更失敗: " + e.message); }
+    };
+
+    window.deleteAsset = async (id) => {
+        const a = assetsData.find(x => x.id === id);
+        if (!confirm(`確定要「永久刪除」資產 ${a.asset_no} (${a.name}) 嗎？\n此動作不可復原！`)) return;
+        try {
+            await FIREBASE_API.deleteAsset(id);
+            alert("已刪除");
+            await refreshData();
+            renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+        } catch (e) { alert("刪除失敗"); }
     };
 
     window.batchScrap = async () => {
