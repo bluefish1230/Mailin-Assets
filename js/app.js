@@ -111,6 +111,7 @@ function renderAssetList(main, title) {
                             <div class="asset-name" style="margin:5px 0 10px 0; font-size:1.1rem; height: auto; font-weight:600;">${a.name}</div>
                             <div class="asset-info" style="font-size:0.85rem; color:var(--text-secondary);">
                                 <p><i data-lucide="user" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>保管人: ${a.custodian}</p>
+                                <p><i data-lucide="package" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>規格: ${a.spec || '-'}</p>
                                 <p><i data-lucide="map-pin" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>地點: ${a.location || '-'}</p>
                                 <p><i data-lucide="calendar" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>採購日期: ${a.purchase_date || '-'}</p>
                             </div>
@@ -260,8 +261,12 @@ function renderAddAsset(main, title) {
         <div class="card">
             <h3>資產建檔</h3>
             <div class="form-grid">
-                <div class="form-group"><label>類別</label><select id="nc"><option value="PC">PC</option><option value="NB">NB</option><option value="N">N (其他)</option></select></div>
+                <div class="form-group"><label>類別 (如 PC, NB, N)</label><select id="nc"><option value="PC">PC</option><option value="NB">NB</option><option value="N">N (其他)</option></select></div>
                 <div class="form-group"><label>品名</label><input type="text" id="nn"></div>
+            </div>
+            <div class="form-group">
+                <label>規格</label>
+                <input type="text" id="nsp" placeholder="例如: i7-13700 / 32G / 1TB">
             </div>
             <div class="form-grid">
                 <div class="form-group"><label>保管人</label><input type="text" id="nu"></div>
@@ -296,6 +301,7 @@ function renderAddAsset(main, title) {
             asset_no: no,
             category: category,
             name: document.getElementById('nn').value,
+            spec: document.getElementById('nsp').value,
             custodian: document.getElementById('nu').value,
             location: document.getElementById('nl').value,
             purchase_date: document.getElementById('npd').value
@@ -318,6 +324,10 @@ function renderEditPage(id) {
                 <input type="text" id="en" value="${a.name}">
             </div>
             <div class="form-group">
+                <label>規格</label>
+                <input type="text" id="esp" value="${a.spec || ''}">
+            </div>
+            <div class="form-group">
                 <label>保管人 (異動將紀錄至日誌)</label>
                 <input type="text" id="eu" value="${a.custodian}">
             </div>
@@ -337,6 +347,7 @@ function renderEditPage(id) {
 
     document.getElementById('uB').onclick = async () => {
         const newName = document.getElementById('en').value;
+        const newSpec = document.getElementById('esp').value;
         const newCustodian = document.getElementById('eu').value;
         const newLocation = document.getElementById('el').value;
         const newDate = document.getElementById('ed').value;
@@ -352,7 +363,7 @@ function renderEditPage(id) {
             });
         }
 
-        await FIREBASE_API.updateAsset(id, { name: newName, custodian: newCustodian, location: newLocation, purchase_date: newDate });
+        await FIREBASE_API.updateAsset(id, { name: newName, spec: newSpec, custodian: newCustodian, location: newLocation, purchase_date: newDate });
         alert("✅ 資料更新成功！");
         await refreshData();
         window.location.hash = '#assets';
