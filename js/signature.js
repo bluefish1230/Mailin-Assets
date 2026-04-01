@@ -44,11 +44,16 @@ export class SignatureApp {
             velocityFilterWeight: 0.7
         });
 
+        let lastWidth = 0;
         const resizeCanvas = () => {
+            const rect = this.canvas.getBoundingClientRect();
+            // 關鍵：如果寬度沒變（只是高度稍微跳動，例如網址列隱藏），就不重新初始化畫布
+            if (Math.abs(rect.width - lastWidth) < 5) return;
+            lastWidth = rect.width;
+
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             const data = this.signaturePad.toData();
 
-            const rect = this.canvas.getBoundingClientRect();
             this.canvas.width = rect.width * ratio;
             this.canvas.height = rect.height * ratio;
             this.canvas.getContext("2d").setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -59,7 +64,6 @@ export class SignatureApp {
 
         const ro = new ResizeObserver(() => resizeCanvas());
         ro.observe(this.canvas.parentElement);
-
         setTimeout(resizeCanvas, 100);
     }
 
@@ -92,11 +96,11 @@ export class SignatureApp {
             .sign-viewport {
                 display: flex;
                 flex-direction: column;
-                min-height: 90dvh;
+                min-height: 100dvh;
                 padding: 1.5rem;
                 background: var(--bg-dark);
                 box-sizing: border-box;
-                gap: 0.75rem;
+                gap: 1rem;
             }
 
             .sign-header {
@@ -109,7 +113,7 @@ export class SignatureApp {
             }
             .sign-header p {
                 font-size: 0.85rem;
-                margin: 0 0 0.5rem;
+                margin: 0;
             }
 
             .asset-chips {
@@ -117,6 +121,7 @@ export class SignatureApp {
                 flex-wrap: wrap;
                 gap: 0.4rem;
                 justify-content: center;
+                margin: 0.5rem 0;
             }
             .chip {
                 background: var(--bg-surface-elevated);
@@ -132,13 +137,14 @@ export class SignatureApp {
                 border: 2px dashed rgba(255, 255, 255, 0.1);
                 border-radius: 16px;
                 overflow: hidden;
-                background: rgba(255, 255, 255, 0.95);
-                min-height: 120px;
-                max-height: 25dvh;
+                background: rgba(255, 255, 255, 1);
+                min-height: 180px;
+                max-height: 40dvh;
+                margin: 0 0.5rem;
             }
             #signatureCanvas {
-                width: 90%;
-                height: 90%;
+                width: 100%;
+                height: 100%;
                 touch-action: none;
                 cursor: crosshair;
             }
@@ -146,18 +152,19 @@ export class SignatureApp {
                 position: absolute;
                 bottom: 0.5rem;
                 left: 0;
-                width: 90%;
+                width: 100%;
                 text-align: center;
-                color: #666;
+                color: #AAA;
                 pointer-events: none;
                 font-size: 0.75rem;
-                opacity: 0.5;
+                opacity: 0.8;
             }
 
             .sign-actions {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 1rem;
+                padding-top: 0.5rem;
             }
             .btn-outline {
                 background: transparent;
@@ -177,67 +184,30 @@ export class SignatureApp {
             /* ── 橫向模式 ── */
             @media (orientation: landscape) and (max-height: 600px) {
                 .sign-viewport {
-                    padding: 1rem 1.25rem;
-                    flex-direction: column;
-                    gap: 0.6rem;
+                    padding: 0.5rem 1rem;
+                    gap: 0.5rem;
                 }
 
-                /* header 變成單行橫排 */
                 .sign-header {
                     display: flex;
                     flex-direction: row;
                     align-items: center;
-                    gap: 0.75rem;
+                    gap: 1rem;
                     text-align: left;
-                    margin: 0;
-                    border-right: none;
-                    padding-right: 0;
                 }
-                .sign-header h1 {
-                    font-size: 1rem;
-                    margin: 0;
-                    white-space: nowrap;
-                }
-                .sign-header p {
-                    font-size: 0.8rem;
-                    margin: 0;
-                    white-space: nowrap;
-                }
-                .asset-chips {
-                    flex-wrap: nowrap;
-                    justify-content: flex-start;
-                    margin: 0;
-                }
+                .sign-header h1 { font-size: 1rem; }
+                .sign-header p { display: none; } /* 隱藏贅字以留空間 */
 
-                /* 按鈕移入 header 右側 */
-                .sign-actions {
-                    display: contents;
-                }
-                /* spacer 把按鈕推到右側 */
-                .asset-chips + .sign-actions,
-                .sign-header .spacer {
-                    flex: 1;
-                }
-                .sign-header::after {
-                    content: '';
-                    flex: 1;
-                }
-                .btn-outline,
-                .btn-primary {
-                    padding: 0.45rem 1rem;
-                    font-size: 0.85rem;
-                    white-space: nowrap;
-                    flex-shrink: 0;
-                }
-
-                /* 簽名框：固定高度，不撐滿 */
+                /* 簽名框：橫向時固定高度，不再隨 dvh 飄移 */
                 .canvas-container {
                     flex: none;
-                    height: 40dvh;
-                    max-height: none;
-                    margin: 4rem 8rem;
-                    min-height: 0;
+                    height: 180px; 
+                    margin: 0;
                     border-radius: 12px;
+                }
+                
+                .sign-actions {
+                    padding-top: 0;
                 }
             }
         `;
