@@ -93,16 +93,30 @@ export class SignatureApp {
         const style = document.createElement('style');
         style.id = 'signature-styles';
         style.textContent = `
-            .sign-viewport { display: flex; flex-direction: column; min-height: 100dvh; padding: 2rem; background: var(--bg-dark); }
-            .sign-header { margin-bottom: 2rem; text-align: center; }
-            .sign-header h1 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary); }
-            .asset-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
-            .chip { background: var(--bg-surface-elevated); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--border-color); }
-            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 20px; margin-bottom: 1.5rem; overflow: hidden; background: rgba(0,0,0,0.2); min-height: 250px; }
+            .sign-viewport { display: flex; flex-direction: column; min-height: 100dvh; padding: 1.5rem; background: var(--bg-dark); box-sizing: border-box; }
+            .sign-header { margin-bottom: 1.5rem; text-align: center; }
+            .sign-header h1 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--primary); }
+            .asset-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-bottom: 0.5rem; }
+            .chip { background: var(--bg-surface-elevated); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--border-color); }
+            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; margin-bottom: 1rem; overflow: hidden; background: rgba(0,0,0,0.2); min-height: 200px; }
             #signatureCanvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
-            .canvas-hint { position: absolute; bottom: 1rem; left: 0; width: 100%; text-align: center; color: var(--text-secondary); pointer-events: none; font-size: 0.8rem; opacity: 0.5; }
-            .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-bottom: 2rem; }
-            .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 1rem; border-radius: 12px; font-weight: 600; cursor: pointer; }
+            .canvas-hint { position: absolute; bottom: 0.5rem; left: 0; width: 100%; text-align: center; color: var(--text-secondary); pointer-events: none; font-size: 0.75rem; opacity: 0.5; }
+            .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-bottom: 1rem; }
+            .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.8rem; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+            .btn-primary { padding: 0.8rem; font-size: 0.9rem; }
+
+            /* 橫向模式專屬優化 */
+            @media (orientation: landscape) and (max-height: 600px) {
+                .sign-viewport { padding: 0.5rem 1rem; flex-direction: row; align-items: stretch; gap: 1rem; }
+                .sign-header { width: 180px; margin-bottom: 0; text-align: left; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border-color); padding-right: 1rem; }
+                .sign-header h1 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+                .sign-header p { font-size: 0.8rem; margin-bottom: 0.5rem; }
+                .asset-chips { justify-content: flex-start; }
+                .canvas-container { margin-bottom: 0; min-height: 100px; flex: 2; height: 100%; }
+                .sign-actions { width: 150px; grid-template-columns: 1fr; flex-direction: column; padding-bottom: 0; align-self: center; }
+                .btn-outline, .btn-primary { padding: 0.6rem; font-size: 0.85rem; }
+                .canvas-hint { bottom: 0.3rem; }
+            }
         `;
         document.head.appendChild(style);
     }
