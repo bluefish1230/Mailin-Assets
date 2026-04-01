@@ -171,15 +171,27 @@
         const sidebar = document.getElementById('sidebar');
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 
+        // 綁定選單點擊事件
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.getAttribute('data-page');
+                if (page) {
+                    window.location.hash = '#' + page;
+                    // 手機版自動收合
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        });
+
         mobileMenuBtn.addEventListener('click', () => {
             sidebar.classList.toggle('-translate-x-full');
         });
 
         const handleRoute = () => {
             const hash = window.location.hash || '#dashboard';
-            const page = hash.replace('#', '');
+            const page = hash.replace('#', '').split('/')[0];
 
-            // 更新選單狀態
+            // 更新選單主頁面狀態 (不論是 edit/ 或 sign/ 只要開頭符合就亮起)
             document.querySelectorAll('.nav-item').forEach(li => {
                 const isActive = li.getAttribute('data-page') === page;
                 if (isActive) {
@@ -190,11 +202,6 @@
                     li.classList.add('text-slate-400');
                 }
             });
-
-            // 手機版自動收合
-            if (!sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.add('-translate-x-full');
-            }
         };
 
         window.addEventListener('hashchange', handleRoute);
