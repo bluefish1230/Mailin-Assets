@@ -283,42 +283,67 @@ function renderAddAsset(main, title) {
                 <div class="form-group"><label>保管人</label><input type="text" id="nu"></div>
                 <div class="form-group"><label>地點</label><input type="text" id="nl"></div>
             </div>
-            <div class="form-group">
-                <label>採購日期</label>
-                <input type="date" id="npd" value="${new Date().toISOString().split('T')[0]}">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>採購日期</label>
+                    <input type="date" id="npd" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label style="color:#fbbf24; font-weight:700;">一次新增數量 (1-20)</label>
+                    <input type="number" id="nq" value="1" min="1" max="20" style="background:rgba(251,191,36,0.1); border-color:#fbbf24;">
+                </div>
             </div>
-            <button class="btn-primary" id="sS" style="width:100%; justify-content:center; margin-top:20px;">確認儲存資產</button>
+            <button class="btn-primary" id="sS" style="width:100%; justify-content:center; margin-top:20px;">確認儲存並建立資產</button>
         </div>`;
     document.getElementById('sS').onclick = async () => {
         const category = document.getElementById('nc').value;
-        // 自動生成編號：類別(PC/NB/N) + 三位數流水號 (需包含已報廢的資產)
-        const prefix = category;
-        const allRelevant = [
-            ...assetsData.filter(a => a.asset_no && a.asset_no.startsWith(prefix)),
-            ...scrapData.filter(s => s.asset_no && s.asset_no.startsWith(prefix))
-        ];
+        const count = parseInt(document.getElementById('nq').value) || 1;
 
-        let nextNumber = 1;
-        if (allRelevant.length > 0) {
-            const numbers = allRelevant.map(item => {
-                const numStr = item.asset_no.replace(prefix, '').replace('-', '');
-                return parseInt(numStr);
-            }).filter(n => !isNaN(n));
-            if (numbers.length > 0) nextNumber = Math.max(...numbers) + 1;
+        // 暫時載入一次最新數據以確保流水號準確
+        await refreshData();
+
+        const results = [];
+        for (let i = 0; i < count; i++) {
+            // 自動生成編號：類別(PC/NB/N) + 三位數流水號 (包含在用與報廢)
+            const prefix = category;
+            const allRelevant = [
+                ...assetsData.filter(a => a.asset_no && a.asset_no.startsWith(prefix)),
+                ...scrapData.filter(s => s.asset_no && s.asset_no.startsWith(prefix)),
+                ...results // 包含在此次迴圈中剛生成的編號
+            ];
+
+            let nextNumber = 1;
+            if (allRelevant.length > 0) {
+                const numbers = allRelevant.map(item => {
+                    const numStr = item.asset_no.replace(prefix, '').replace('-', '');
+                    return parseInt(numStr);
+                }).filter(n => !isNaN(n));
+                if (numbers.length > 0) nextNumber = Math.max(...numbers) + 1;
+            }
+            const no = `${prefix}${nextNumber.toString().padStart(3, '0')}`;
+
+            const data = {
+                asset_no: no,
+                category: category,
+                name: document.getElementById('nn').value,
+                spec: document.getElementById('nsp').value,
+                custodian: document.getElementById('nu').value,
+                location: document.getElementById('nl').value,
+                purchase_date: document.getElementById('npd').value
+            };
+            results.push(data);
         }
-        const no = `${prefix}${nextNumber.toString().padStart(3, '0')}`;
 
-        const data = {
-            asset_no: no,
-            category: category,
-            name: document.getElementById('nn').value,
-            spec: document.getElementById('nsp').value,
-            custodian: document.getElementById('nu').value,
-            location: document.getElementById('nl').value,
-            purchase_date: document.getElementById('npd').value
-        };
-        await FIREBASE_API.addAsset(data);
-        alert(`✅ 資產登記成功！編號為 ${no}`); await refreshData(); window.location.hash = '#assets';
+        const btn = document.getElementById('sS');
+        btn.innerText = `正在批量產生中 (${count}筆)...`; btn.disabled = true;
+
+        for (const item of results) {
+            await FIREBASE_API.addAsset(item);
+        }
+
+        alert(`✅ 批量登記成功！累計新增 ${count} 筆資產。`);
+        await refreshData();
+        window.location.hash = '#assets';
     };
 }
 
