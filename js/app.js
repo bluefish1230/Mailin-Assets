@@ -729,6 +729,7 @@ function renderSignManager(main, title) {
 function checkAuth() {
     const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
     const overlay = document.getElementById('loginOverlay');
+    if (!overlay) return;
     if (isAdmin) {
         overlay.classList.add('opacity-0', 'pointer-events-none');
         setTimeout(() => overlay.classList.add('hidden'), 300);
@@ -737,67 +738,13 @@ function checkAuth() {
     }
 }
 
-function initNavigation() {
-    const loginBtn = document.getElementById('loginBtn');
-    const passwordInput = document.getElementById('adminPassword');
-    const loginError = document.getElementById('loginError');
-
-    if (loginBtn) {
-        loginBtn.onclick = () => {
-            if (passwordInput.value === '671230') {
-                sessionStorage.setItem('isAdmin', 'true');
-                loginError.classList.add('hidden');
-                checkAuth();
-            } else {
-                loginError.classList.remove('hidden');
-                passwordInput.value = '';
-                passwordInput.focus();
-            }
-        };
-        // 支援 Enter 鍵登入
-        passwordInput.onkeypress = (e) => { if (e.key === 'Enter') loginBtn.click(); };
-    }
-}
-
-// 全域輔助函數
-window.setFilter = (c) => { currentFilter = c; handleRouting(); };
-
-window.toggleSelect = (id) => {
-    if (selectedAssets.has(id)) selectedAssets.delete(id);
-    else selectedAssets.add(id);
-    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-};
-
-window.toggleSelectAll = (checked) => {
-    const filtered = currentFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === currentFilter);
-    const q = searchQuery.toLowerCase();
-    const searchFiltered = searchQuery ? filtered.filter(a =>
-        (a.custodian || '').toLowerCase().includes(q) ||
-        (a.name || '').toLowerCase().includes(q) ||
-        (a.asset_no || '').toLowerCase().includes(q) ||
-        (a.location || '').toLowerCase().includes(q)
-    ) : filtered;
-
-    if (checked) searchFiltered.forEach(a => selectedAssets.add(a.id));
-    else searchFiltered.forEach(a => selectedAssets.delete(a.id));
-
-    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-};
-
-window.clearSelection = () => {
-    selectedAssets.clear();
-    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-};
-
 window.batchUpdateAssets = async () => {
     const newVal = document.getElementById('newCustodian').value;
     const newLoc = document.getElementById('newLocation').value;
     if (!newVal && !newLoc) return alert("請至少輸入一項（新保管人或新地點）");
-
     let confirmMsg = `確定要將這 ${selectedAssets.size} 項資產進行異動嗎？`;
     if (newVal) confirmMsg += `\n- 新保管人: ${newVal}`;
     if (newLoc) confirmMsg += `\n- 新地點: ${newLoc}`;
-
     if (!confirm(confirmMsg)) return;
 
     try {
@@ -816,10 +763,7 @@ window.batchUpdateAssets = async () => {
                 });
             }
             if (newLoc) updateData.location = newLoc;
-
-            if (Object.keys(updateData).length > 0) {
-                await FIREBASE_API.updateAsset(id, updateData);
-            }
+            if (Object.keys(updateData).length > 0) await FIREBASE_API.updateAsset(id, updateData);
         }
         alert("✅ 批次變更成功");
         selectedAssets.clear();
@@ -872,30 +816,65 @@ window.scrapAsset = async (id) => {
 window.clearAllDatabaseRecords = async () => {
     if (!confirm("🚨 警告：確定要清空資料庫中「所有」的資產、報廢、簽名、以及異動紀錄嗎？\n此動作發生後資料將永遠消失，無法復原！")) return;
     if (prompt("請輸入 'RESET' 以確認執行 (全大寫)：") !== 'RESET') return alert("取消操作");
-
     try {
-        const b = document.querySelector('button[onclick="window.clearAllDatabaseRecords()"]');
-        b.innerText = '正在強力清空中，請勿重新整理...'; b.disabled = true;
-
         for (const a of assetsData) await FIREBASE_API.deleteAsset(a.id);
         for (const s of scrapData) await FIREBASE_API.deleteScrap(s.id);
         for (const si of signData) await FIREBASE_API.deleteSignature(si.id);
         for (const t of transfersData) await FIREBASE_API.deleteTransfer(t.id);
-
         alert("✅ 全系統資料已清空歸零。");
         selectedAssets.clear();
         await refreshData();
         handleRouting();
-    } catch (e) {
-        alert("清空過程失敗: " + e.message);
-    }
+    } catch (e) { alert("清空失敗: " + e.message); }
 };
-
-function initNavigation() {
-    document.getElementById('loginBtn').onclick = () => { if (document.getElementById('adminPassword').value === '671230') { sessionStorage.setItem('isAdmin', 'true'); checkAuth(); } else { document.getElementById('loginError').classList.remove('hidden'); } };
-}
 
 // 全域輔助函數
 window.setFilter = (c) => { currentFilter = c; handleRouting(); };
 
+window.toggleSelect = (id) => {
+    if (selectedAssets.has(id)) selectedAssets.delete(id);
+    else selectedAssets.add(id);
+    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+};
+
+window.toggleSelectAll = (checked) => {
+    const list = currentFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === currentFilter);
+    const q = searchQuery.toLowerCase();
+    const filtered = searchQuery ? list.filter(a =>
+        (a.custodian || '').toLowerCase().includes(q) || (a.name || '').toLowerCase().includes(q) || (a.asset_no || '').toLowerCase().includes(q)
+    ) : list;
+    if (checked) filtered.forEach(a => selectedAssets.add(a.id));
+    else filtered.forEach(a => selectedAssets.delete(a.id));
+    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+};
+
+window.clearSelection = () => { selectedAssets.clear(); renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle')); };
+
+function initNavigation() {
+    const loginBtn = document.getElementById('loginBtn');
+    const passwordInput = document.getElementById('adminPassword');
+    const loginError = document.getElementById('loginError');
+
+    if (loginBtn && passwordInput) {
+        loginBtn.onclick = (e) => {
+            e.preventDefault();
+            if (passwordInput.value.trim() === '671230') {
+                sessionStorage.setItem('isAdmin', 'true');
+                loginError.classList.add('hidden');
+                checkAuth();
+                handleRouting();
+            } else {
+                loginError.classList.remove('hidden');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        };
+        passwordInput.onkeypress = (e) => { if (e.key === 'Enter') loginBtn.click(); };
+    }
+}
+
 function safeCreateIcons() { if (window.lucide) window.lucide.createIcons(); else setTimeout(safeCreateIcons, 200); }
+
+// 初始化
+initNavigation();
+checkAuth();
