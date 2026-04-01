@@ -101,6 +101,13 @@ export class SignatureApp {
                 background: var(--bg-dark);
                 box-sizing: border-box;
                 gap: 1rem;
+                /* 關鍵：鎖定整個視窗不允許縮放與橡皮筋捲動 */
+                touch-action: none;
+                overscroll-behavior: none;
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+                top: 0;
             }
 
             .sign-header {
