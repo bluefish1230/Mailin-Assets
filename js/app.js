@@ -246,7 +246,12 @@ function renderDashboard(main, title) {
             <div class="stat-card"><h3>報廢總數</h3><p class="count">${scrapData.length}</p></div>
             <div class="stat-card"><h3>點收存單</h3><p class="count">${signData.length}</p></div>
             <div class="stat-card" style="border-color:var(--accent);"><h3>異動紀錄</h3><p class="count">${transfersData.length}</p></div>
-        </div>`;
+        </div>
+        <div style="margin-top:50px; text-align:center;">
+             <button class="btn-action" style="background:#ef4444; color:white; padding:15px 30px;" onclick="window.clearAllDatabaseRecords()">🚨 清空所有系統紀錄 (含資產、簽名、異動)</button>
+             <p style="color:var(--text-secondary); margin-top:10px; font-size:0.8rem;">※ 注意：此操作無法復原，僅供測試歸零時使用。</p>
+        </div>
+    `;
 }
 
 function renderAddAsset(main, title) {
@@ -538,6 +543,28 @@ function initNavigation() {
             await refreshData();
             renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
         } catch (e) { alert("報廢過程出錯: " + e.message); }
+    };
+
+    window.clearAllDatabaseRecords = async () => {
+        if (!confirm("🚨 警告：確定要清空資料庫中「所有」的資產、報廢、簽名、以及異動紀錄嗎？\n此動作發生後資料將永遠消失，無法復原！")) return;
+        if (prompt("請輸入 'RESET' 以確認執行 (全大寫)：") !== 'RESET') return alert("取消操作");
+
+        try {
+            const b = document.querySelector('button[onclick="window.clearAllDatabaseRecords()"]');
+            b.innerText = '正在強力清空中，請勿重新整理...'; b.disabled = true;
+
+            for (const a of assetsData) await FIREBASE_API.deleteAsset(a.id);
+            for (const s of scrapData) await FIREBASE_API.deleteScrap(s.id);
+            for (const si of signData) await FIREBASE_API.deleteSignature(si.id);
+            for (const t of transfersData) await FIREBASE_API.deleteTransfer(t.id);
+
+            alert("✅ 全系統資料已清空歸零。");
+            selectedAssets.clear();
+            await refreshData();
+            handleRouting();
+        } catch (e) {
+            alert("清空過程失敗: " + e.message);
+        }
     };
 
     document.getElementById('mobileMenuBtn').onclick = () => document.querySelector('.sidebar').classList.add('active-sidebar');

@@ -39,6 +39,9 @@ const FIREBASE_API = {
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     },
+    async deleteScrap(id) {
+        return await deleteDoc(doc(db, "scrapping", id));
+    },
 
     // --- 簽名 (Signatures) ---
     async addSignature(data) {
@@ -49,6 +52,9 @@ const FIREBASE_API = {
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     },
+    async deleteSignature(id) {
+        return await deleteDoc(doc(db, "signatures", id));
+    },
 
     // --- 異動紀錄 (Transfers) ---
     async addTransfer(data) {
@@ -58,6 +64,9 @@ const FIREBASE_API = {
         const q = query(collection(db, "transfers"), orderBy("timestamp", "desc"));
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+    async deleteTransfer(id) {
+        return await deleteDoc(doc(db, "transfers", id));
     }
 };
 
