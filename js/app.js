@@ -259,10 +259,6 @@ function renderDashboard(main, title) {
             <div class="stat-card"><h3>點收存單</h3><p class="count">${signData.length}</p></div>
             <div class="stat-card" style="border-color:var(--accent);"><h3>異動紀錄</h3><p class="count">${transfersData.length}</p></div>
         </div>
-        <div style="margin-top:50px; text-align:center;">
-             <button class="btn-action" style="background:#ef4444; color:white; padding:15px 30px;" onclick="window.clearAllDatabaseRecords()">🚨 清空所有系統紀錄 (含資產、簽名、異動)</button>
-             <p style="color:var(--text-secondary); margin-top:10px; font-size:0.8rem;">※ 注意：此操作無法復原，僅供測試歸零時使用。</p>
-        </div>
     `;
 }
 
