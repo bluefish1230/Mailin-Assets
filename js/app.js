@@ -107,8 +107,8 @@ function renderAssetList(main, title) {
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-left:35px;">
                         <div>
                             <span class="asset-badge badge-${a.category.toLowerCase()}">${a.category}</span>
-                            <div class="asset-id">${a.asset_no}</div>
-                            <div class="asset-name" style="margin:10px 0; font-size:1.2rem; height: auto;">${a.name}</div>
+                            <div class="asset-id" style="color:var(--accent); font-weight:700; font-family:monospace; font-size:1.1rem; margin:5px 0;">${a.asset_no}</div>
+                            <div class="asset-name" style="margin:5px 0 10px 0; font-size:1.1rem; height: auto; font-weight:600;">${a.name}</div>
                             <div class="asset-info" style="font-size:0.85rem; color:var(--text-secondary);">
                                 <p><i data-lucide="user" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>保管人: ${a.custodian}</p>
                                 <p><i data-lucide="map-pin" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>地點: ${a.location || '-'}</p>
