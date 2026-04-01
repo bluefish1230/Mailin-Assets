@@ -98,7 +98,7 @@ export class SignatureApp {
             .sign-header h1 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--primary); }
             .asset-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-bottom: 0.5rem; }
             .chip { background: var(--bg-surface-elevated); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; border: 1px solid var(--border-color); }
-            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; margin-bottom: 1rem; overflow: hidden; background: rgba(0,0,0,0.2); min-height: 200px; }
+            .canvas-container { flex: 1; position: relative; border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: 16px; margin-bottom: 1rem; overflow: hidden; background: rgba(0,0,0,0.2); min-height: 140px; max-height: 35dvh; }
             #signatureCanvas { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
             .canvas-hint { position: absolute; bottom: 0.5rem; left: 0; width: 100%; text-align: center; color: var(--text-secondary); pointer-events: none; font-size: 0.75rem; opacity: 0.5; }
             .sign-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-bottom: 1rem; }
@@ -112,7 +112,7 @@ export class SignatureApp {
                 .sign-header h1 { font-size: 1.1rem; margin-bottom: 0.3rem; }
                 .sign-header p { font-size: 0.8rem; margin-bottom: 0.5rem; }
                 .asset-chips { justify-content: flex-start; }
-                .canvas-container { margin-bottom: 0; min-height: 100px; flex: 2; height: 100%; }
+                .canvas-container { margin-bottom: 0; min-height: 80px; max-height: 60dvh; flex: 2; height: 100%; }
                 .sign-actions { width: 150px; grid-template-columns: 1fr; flex-direction: column; padding-bottom: 0; align-self: center; }
                 .btn-outline, .btn-primary { padding: 0.6rem; font-size: 0.85rem; }
                 .canvas-hint { bottom: 0.3rem; }
