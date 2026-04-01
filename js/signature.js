@@ -226,36 +226,70 @@ export class SignatureApp {
 
             /* ── 橫向模式 ── */
             @media (orientation: landscape) and (max-height: 600px) {
+                /* 整體改為橫向三欄：header | 簽名區 | 按鈕 */
                 .sign-viewport {
                     padding: 0.5rem 1rem;
-                    gap: 0.5rem;
-                    flex-direction: column;
-                }
-
-                .sign-header {
-                    display: flex;
+                    gap: 0;
                     flex-direction: row;
                     align-items: center;
-                    gap: 1rem;
+                }
+
+                /* 左欄：標題 + chips，垂直排列 */
+                .sign-header {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.4rem;
                     text-align: left;
+                    flex-shrink: 0;
+                    width: auto;
+                    padding-right: 0.75rem;
                 }
                 .sign-header h1 { font-size: 1rem; }
                 .sign-header p { display: none; }
-
-                .canvas-wrapper {
-                    padding: 0;
+                .asset-chips {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    justify-content: flex-start;
+                    margin: 0;
                 }
 
-                /* ✅ 修正 #4：覆蓋直向的 max-height，避免兩個規則同時作用壓縮高度 */
+                /* 中欄：簽名區，高度與寬度縮小 */
+                .canvas-wrapper {
+                    flex: 1;
+                    min-height: 0;
+                    min-width: 0;
+                    padding: 0.4rem 0.5rem;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+
+                /* ✅ 縮小高度（90px）與最大寬度（200px），與預覽一致 */
                 .canvas-container {
                     flex: none;
-                    height: 160px;
+                    height: 90px;
+                    max-width: 200px;
                     max-height: none;
-                    border-radius: 12px;
+                    border-radius: 10px;
                 }
 
+                /* 右欄：按鈕改為垂直排列 */
                 .sign-actions {
-                    padding-top: 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    flex-shrink: 0;
+                    padding: 0;
+                    width: 90px;
+                }
+
+                .btn-outline,
+                .btn-primary {
+                    width: 100%;
+                    font-size: 0.8rem;
+                    padding: 0.55rem 0.4rem;
+                    white-space: nowrap;
                 }
             }
         `;
