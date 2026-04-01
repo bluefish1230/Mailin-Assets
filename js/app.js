@@ -166,33 +166,39 @@ function renderSignMode(ids) {
                 <h2>資產簽收確認</h2>
                 <p style="color:var(--text-secondary);">${ids.join(', ')}</p>
             </div>
-            <div style="background:white; border-radius:20px; flex-grow:1; display:flex; overflow:hidden;">
-                <canvas id="sp" style="width:100%; height:100%; touch-action:none;"></canvas>
+            <div style="background:white; border-radius:20px; flex:1; position:relative; overflow:hidden; min-height:400px; box-shadow:inset 0 0 10px rgba(0,0,0,0.1);">
+                <canvas id="sp" style="position:absolute; top:0; left:0; width:100%; height:100%; touch-action:none; cursor:crosshair;"></canvas>
             </div>
-            <div style="margin-top:20px; display:flex; gap:15px;">
-                <button class="btn-outline" style="flex:1;" id="clearSign">重簽</button>
-                <button class="btn-primary" style="flex:2; justify-content:center;" id="saveBtn">本人確認送出</button>
+            <div style="margin-top:20px; display:flex; gap:15px; flex-shrink:0;">
+                <button class="btn-outline" style="flex:1; border-color:#334155; height:50px;" id="clearSign">重簽</button>
+                <button class="btn-primary" style="flex:2; justify-content:center; height:50px;" id="saveBtn">本人確認送出</button>
             </div>
         </div>
     `;
     const canvas = document.getElementById('sp');
     const resizeCanvas = () => {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        canvas.width = rect.width * ratio;
+        canvas.height = rect.height * ratio;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // 重設變換
+        ctx.scale(ratio, ratio);
         if (signaturePad) signaturePad.clear();
     };
 
-    // 延遲初始化確保佈局已計算
-    setTimeout(() => {
+    // 多次檢查並重設，確保穩定
+    const initPad = () => {
         resizeCanvas();
         if (window.SignaturePad) {
-            signaturePad = new SignaturePad(canvas, { penColor: 'rgb(15, 23, 42)', minWidth: 2, maxWidth: 4 });
+            signaturePad = new SignaturePad(canvas, { penColor: 'rgb(15, 23, 42)', minWidth: 2, maxWidth: 5 });
         }
-    }, 300);
+    };
 
+    setTimeout(initPad, 100);
+    setTimeout(initPad, 500); // 二度校正
     window.onresize = resizeCanvas;
+
     document.getElementById('clearSign').onclick = () => signaturePad.clear();
     document.getElementById('saveBtn').onclick = async () => {
         if (signaturePad.isEmpty()) { alert("請先完成簽署"); return; }
