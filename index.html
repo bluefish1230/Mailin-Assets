@@ -1,133 +1,206 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公司資產管理系統</title>
-    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        accent: '#a855f7',
+                        bgDark: '#0f172a',
+                        bgSurface: '#1e293b',
+                    },
+                    backgroundImage: {
+                        'primary-gradient': 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@latest/dist/signature_pad.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+        }
+
+        .nav-active {
+            @apply bg-white/10 text-white shadow-lg;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+    </style>
 </head>
 
-<body class="dark-mode">
+<body class="bg-[#0f172a] text-slate-200 antialiased overflow-x-hidden">
     <!-- 管理員登入遮罩 -->
-    <div id="loginOverlay" class="login-overlay">
-        <div class="login-box">
-            <div class="logo">
-                <i data-lucide="shield-check" style="width:40px; height:40px; color:#a855f7;"></i>
-                <span class="logo-text">管理系統</span>
+    <div id="loginOverlay"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all duration-300">
+        <div class="w-full max-w-md p-8 m-4 bg-[#1e293b] border border-white/10 rounded-3xl shadow-2xl">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="p-3 bg-white/5 rounded-2xl">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-indigo-400"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-tight text-white">管理系統</span>
             </div>
-            <h2>管理員身分驗證</h2>
-            <div class="form-group-login">
-                <label>帳號：admin</label>
+            <h2 class="text-xl font-semibold text-white mb-6">管理員身分驗證</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-2">帳號：admin</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="password" id="adminPassword" placeholder="請輸入管理員密碼"
+                            class="w-full bg-[#0f172a] border border-white/10 rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                    </div>
+                </div>
+                <button id="loginBtn"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all">
+                    進入管理系統
+                </button>
+                <p id="loginError" class="hidden text-center text-rose-400 text-sm font-medium mt-4">❌ 密碼錯誤，請重新輸入</p>
             </div>
-            <div class="form-group-login">
-                <label>登入密碼</label>
-                <input type="password" id="adminPassword" placeholder="請輸入管理員密碼">
-            </div>
-            <button id="loginBtn" class="btn-primary" style="width:100%; justify-content:center;">進入管理系統</button>
-            <p id="loginError" class="hidden error-text">❌ 密碼錯誤，請重新輸入</p>
         </div>
     </div>
 
-    <div class="app-container">
-        <!-- 手機版 Header -->
-        <div class="mobile-header">
-            <div class="logo">
-                <span class="logo-text" style="font-size: 1.5rem; font-weight: 800;">公司資產清單</span>
-            </div>
-            <button id="mobileMenuBtn" class="btn-icon">
-                <i data-lucide="menu"></i>
+    <!-- App Shell -->
+    <div class="flex min-h-screen">
+        <!-- 手機版浮動導覽列 -->
+        <div
+            class="fixed top-0 inset-x-0 h-16 bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5 z-50 px-5 flex items-center justify-between lg:hidden">
+            <span
+                class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">公司資產清單</span>
+            <button id="mobileMenuBtn" class="p-2 bg-white/5 rounded-lg">
+                <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
         </div>
 
         <!-- 側邊選單 -->
-        <nav class="sidebar">
-            <div class="logo">
-                <i data-lucide="package" class="logo-icon"></i>
-                <span class="logo-text" style="font-size: 1.5rem; font-weight: 800;">公司資產清單</span>
+        <nav id="sidebar"
+            class="fixed lg:sticky top-0 left-0 h-screen w-72 bg-[#1e293b] border-r border-white/5 flex flex-col z-[60] -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <div class="p-8 flex items-center gap-3">
+                <div class="p-2 bg-indigo-500/20 rounded-xl">
+                    <i data-lucide="package" class="w-6 h-6 text-indigo-400"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-white">資產管理系統</span>
             </div>
-            <ul class="nav-links">
-                <li class="active" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span>儀表板</span></li>
-                <li data-page="assets"><i data-lucide="database"></i><span>資產列表</span></li>
-                <li data-page="signature"><i data-lucide="pen-tool"></i><span>手寫簽名</span></li>
-                <li data-page="scrapping"><i data-lucide="trash-2"></i><span>報廢管理</span></li>
-                <li data-page="sign-history"><i data-lucide="file-signature"></i><span>簽名紀錄</span></li>
-                <li data-page="transfers"><i data-lucide="history"></i><span>異動紀錄</span></li>
+
+            <ul class="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+                <li data-page="dashboard"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-slate-400">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span>儀表板</span>
+                </li>
+                <li data-page="assets"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-slate-400">
+                    <i data-lucide="database" class="w-5 h-5"></i><span>資產列表</span>
+                </li>
+                <li data-page="signature"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-slate-400">
+                    <i data-lucide="pen-tool" class="w-5 h-5"></i><span>手寫簽名</span>
+                </li>
+                <li data-page="scrapping"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-slate-400">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i><span>報廢管理</span>
+                </li>
+                <li data-page="sign-history"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-slate-400">
+                    <i data-lucide="file-signature" class="w-5 h-5"></i><span>簽名紀錄</span>
+                </li>
+                <li data-page="transfers"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-slate-400">
+                    <i data-lucide="history" class="w-5 h-5"></i><span>異動紀錄</span>
+                </li>
             </ul>
-            <div class="sidebar-footer">
-                <p style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5;">Mailin Assets v2.0</p>
+
+            <div class="p-6 border-t border-white/5">
+                <p class="text-[0.7rem] text-slate-500 uppercase tracking-widest font-bold">Mailin Assets v2.5</p>
             </div>
         </nav>
 
         <!-- 主內容區 -->
-        <main class="main-content">
-            <header>
-                <div class="header-left">
-                    <h1 id="pageTitle">系統總覽</h1>
-                    <p id="pageSubTitle" style="color: var(--text-secondary); font-size: 0.9rem;">歡迎回來，管理員</p>
+        <main class="flex-1 min-w-0 flex flex-col bg-[#0f172a]">
+            <!-- Header -->
+            <header
+                class="h-20 flex items-center justify-between px-6 lg:px-10 border-b border-white/5 sticky top-0 bg-[#0f172a]/90 backdrop-blur-md z-40 hidden lg:flex">
+                <div>
+                    <h1 id="pageTitle" class="text-xl font-bold text-white tracking-tight">系統總覽</h1>
+                    <p id="pageSubTitle" class="text-sm text-slate-500">歡迎回來，系統管理員</p>
                 </div>
-                <div class="user-profile">
-                    <div class="avatar">Admin</div>
+                <div class="flex items-center gap-4">
+                    <div id="statusIndicator"
+                        class="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-[0.7rem] text-emerald-500 font-bold uppercase tracking-wider">Cloud Sync
+                            ON</span>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-black text-white shadow-lg">
+                        AD</div>
                 </div>
             </header>
 
-            <section id="mainSection" class="content-section">
-                <!-- 內容由 app.js 動態注入 -->
-                <div class="loading">正在讀取雲端資料...</div>
+            <!-- Scrollable Content -->
+            <section id="mainSection" class="flex-1 p-6 lg:p-10 overflow-y-auto">
+                <div class="flex items-center justify-center h-full text-slate-500 italic animate-pulse">
+                    正在載入雲端資產資料...
+                </div>
             </section>
         </main>
     </div>
 
-    <!-- 腳本區域 -->
+    <!-- Scripts -->
     <script>
-        // SPA 簡單路由切換
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
         const handleRoute = () => {
             const hash = window.location.hash || '#dashboard';
-            const pageTitle = document.getElementById('pageTitle');
+            const page = hash.replace('#', '');
 
-            // 如果是簽名模式，由 signature.js 處理
-            if (hash.startsWith('#sign')) {
-                return;
-            }
-
-            // 更新選單 Active 狀態
-            document.querySelectorAll('.nav-links li').forEach(li => {
-                li.classList.remove('active');
-                if (`#${li.getAttribute('data-page')}` === hash) li.classList.add('active');
+            // 更新選單狀態
+            document.querySelectorAll('.nav-item').forEach(li => {
+                const isActive = li.getAttribute('data-page') === page;
+                if (isActive) {
+                    li.classList.add('bg-indigo-500/10', 'text-indigo-400', 'ring-1', 'ring-indigo-500/30');
+                    li.classList.remove('text-slate-400');
+                } else {
+                    li.classList.remove('bg-indigo-500/10', 'text-indigo-400', 'ring-1', 'ring-indigo-500/30');
+                    li.classList.add('text-slate-400');
+                }
             });
+
+            // 手機版自動收合
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.add('-translate-x-full');
+            }
         };
 
         window.addEventListener('hashchange', handleRoute);
-        window.addEventListener('load', () => {
-            handleRoute();
-            if (window.lucide) window.lucide.createIcons();
-        });
+        window.addEventListener('load', handleRoute);
     </script>
     <script type="module" src="js/app.js"></script>
-    <style>
-        .loading {
-            display: flex;
-            justify-content: center;
-            padding: 5rem;
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
-        .avatar {
-            background: var(--primary-gradient);
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 0.8rem;
-        }
-    </style>
 </body>
 
 </html>

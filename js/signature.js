@@ -11,30 +11,44 @@ export class SignatureApp {
 
     renderUI(assetsList = []) {
         this.container.innerHTML = `
-            <div class="sign-viewport">
-                <header class="sign-header">
-                    <h1>數位簽名確認</h1>
-                    <p>確認簽收下列資產：</p>
-                    <div class="asset-chips">
-                        ${assetsList.map(id => `<span class="chip">${id}</span>`).join('')}
+            <div class="fixed inset-0 bg-[#0f172a] text-slate-200 flex flex-col p-6 gap-4 touch-none overscroll-none overflow-hidden
+                landscape:flex-row landscape:items-center landscape:p-4 landscape:gap-0">
+                
+                <!-- Header Component -->
+                <header class="text-center shrink-0 landscape:text-left landscape:flex landscape:flex-col landscape:gap-1 landscape:pr-4 landscape:w-auto">
+                    <h1 class="text-xl font-bold text-indigo-400 mb-1 lg:text-2xl tracking-tight uppercase">數位簽名確認</h1>
+                    <p class="text-xs text-slate-500 mb-2 landscape:hidden">請確認簽收下列資產：</p>
+                    <div class="flex flex-wrap gap-1.5 justify-center landscape:flex-col landscape:items-start landscape:m-0">
+                        ${assetsList.map(id => `<span class="bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-lg text-[0.65rem] font-bold text-indigo-300 uppercase tracking-widest">${id}</span>`).join('')}
                     </div>
                 </header>
 
-                <div class="canvas-wrapper">
-                    <div class="canvas-container">
-                        <canvas id="signatureCanvas"></canvas>
-                        <div class="canvas-hint">請在上方空白區域手寫簽名</div>
+                <!-- Canvas Sub-system -->
+                <div class="flex-1 min-h-0 flex flex-col px-2 landscape:p-2 landscape:justify-center">
+                    <div class="relative flex-1 min-h-[160px] border-2 border-dashed border-white/10 rounded-3xl bg-white overflow-hidden shadow-2xl
+                        landscape:flex-none landscape:h-[120px] landscape:max-w-[280px]">
+                        <canvas id="signatureCanvas" class="block w-full h-full cursor-crosshair touch-none"></canvas>
+                        <div class="absolute bottom-3 inset-x-0 text-center text-[0.6rem] font-bold uppercase tracking-[0.2em] text-slate-300 pointer-events-none select-none">
+                            Please sign here
+                        </div>
                     </div>
                 </div>
 
-                <div class="sign-actions">
-                    <button id="clearBtn" class="btn-outline">清除重新簽名</button>
-                    <button id="confirmBtn" class="btn-primary">確認送出並關閉</button>
+                <!-- Action System -->
+                <div class="grid grid-cols-2 gap-4 shrink-0 pb-[env(safe-area-inset-bottom,0)] 
+                    landscape:flex landscape:flex-col landscape:gap-2 landscape:p-0 landscape:w-[120px]">
+                    <button id="clearBtn" class="bg-white/5 hover:bg-white/10 text-slate-400 font-bold py-3.5 rounded-2xl transition-all active:scale-95 text-sm
+                        landscape:py-2.5 landscape:text-xs">
+                        清除重簽
+                    </button>
+                    <button id="confirmBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-xl shadow-indigo-500/10 transition-all active:scale-95 text-sm
+                        landscape:py-2.5 landscape:text-xs">
+                        確認送出
+                    </button>
                 </div>
             </div>
         `;
 
-        this.appendStyles();
         this.initCanvas();
         this.initButtons();
     }
@@ -108,191 +122,5 @@ export class SignatureApp {
 
             window.location.hash = 'dashboard';
         });
-    }
-
-    appendStyles() {
-        if (document.getElementById('signature-styles')) return;
-        const style = document.createElement('style');
-        style.id = 'signature-styles';
-        style.textContent = `
-            /* ── 直向（預設）── */
-            .sign-viewport {
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-                padding: 1.5rem;
-                box-sizing: border-box;
-                background: var(--bg-dark);
-                touch-action: none;
-                overscroll-behavior: none;
-                overflow: hidden;
-
-                /* ✅ 修正 #3：用 inset: 0 取代 min-height: 100dvh，
-                   在 iOS Safari 上 position:fixed + dvh 組合有已知渲染問題 */
-                position: fixed;
-                inset: 0;
-            }
-
-            .sign-header {
-                text-align: center;
-                flex-shrink: 0;
-            }
-            .sign-header h1 {
-                font-size: 1.2rem;
-                margin: 0 0 0.3rem;
-                color: var(--primary);
-            }
-            .sign-header p {
-                font-size: 0.85rem;
-                margin: 0;
-            }
-
-            .asset-chips {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.4rem;
-                justify-content: center;
-                margin: 0.5rem 0;
-            }
-            .chip {
-                background: var(--bg-surface-elevated);
-                padding: 0.2rem 0.6rem;
-                border-radius: 20px;
-                font-size: 0.75rem;
-                border: 1px solid var(--border-color);
-            }
-
-            /* ✅ 新增 canvas-wrapper 撐滿剩餘空間，canvas-container 隨之拉伸 */
-            .canvas-wrapper {
-                flex: 1;
-                min-height: 0; /* 關鍵：讓 flex child 可以縮小，不會撐破父容器 */
-                display: flex;
-                flex-direction: column;
-                padding: 0 0.5rem;
-            }
-
-            .canvas-container {
-                position: relative;
-                border: 2px dashed rgba(255, 255, 255, 0.15);
-                border-radius: 16px;
-                overflow: hidden;
-                background: rgb(255, 255, 255);
-                flex: 1;
-                min-height: 160px;
-            }
-
-            #signatureCanvas {
-                display: block;
-                width: 100%;
-                height: 100%;
-                touch-action: none;
-                cursor: crosshair;
-            }
-
-            .canvas-hint {
-                position: absolute;
-                bottom: 0.5rem;
-                left: 0;
-                width: 100%;
-                text-align: center;
-                color: #999;
-                pointer-events: none;
-                font-size: 0.75rem;
-                user-select: none;
-            }
-
-            .sign-actions {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 1rem;
-                flex-shrink: 0;
-                padding-bottom: env(safe-area-inset-bottom, 0); /* ✅ 支援 iPhone 底部安全區 */
-            }
-
-            .btn-outline {
-                background: transparent;
-                border: 1px solid var(--border-color);
-                color: var(--text-primary);
-                padding: 0.8rem;
-                border-radius: 12px;
-                font-weight: 600;
-                cursor: pointer;
-                font-size: 0.9rem;
-            }
-            .btn-primary {
-                padding: 0.8rem;
-                font-size: 0.9rem;
-            }
-
-            /* ── 橫向模式 ── */
-            @media (orientation: landscape) and (max-height: 600px) {
-                /* 整體改為橫向三欄：header | 簽名區 | 按鈕 */
-                .sign-viewport {
-                    padding: 0.5rem 1rem;
-                    gap: 0;
-                    flex-direction: row;
-                    align-items: center;
-                }
-
-                /* 左欄：標題 + chips，垂直排列 */
-                .sign-header {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 0.4rem;
-                    text-align: left;
-                    flex-shrink: 0;
-                    width: auto;
-                    padding-right: 0.75rem;
-                }
-                .sign-header h1 { font-size: 1rem; }
-                .sign-header p { display: none; }
-                .asset-chips {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    justify-content: flex-start;
-                    margin: 0;
-                }
-
-                /* 中欄：簽名區，高度與寬度縮小 */
-                .canvas-wrapper {
-                    flex: 1;
-                    min-height: 0;
-                    min-width: 0;
-                    padding: 0.4rem 0.5rem;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                }
-
-                /* ✅ 縮小高度（90px）與最大寬度（200px），與預覽一致 */
-                .canvas-container {
-                    flex: none;
-                    height: 90px;
-                    max-width: 200px;
-                    max-height: none;
-                    border-radius: 10px;
-                }
-
-                /* 右欄：按鈕改為垂直排列 */
-                .sign-actions {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                    flex-shrink: 0;
-                    padding: 0;
-                    width: 90px;
-                }
-
-                .btn-outline,
-                .btn-primary {
-                    width: 100%;
-                    font-size: 0.8rem;
-                    padding: 0.55rem 0.4rem;
-                    white-space: nowrap;
-                }
-            }
-        `;
-        document.head.appendChild(style);
     }
 }

@@ -24,7 +24,6 @@ async function handleRouting() {
     const hash = window.location.hash || '#dashboard';
     const main = document.getElementById('mainSection');
     const title = document.getElementById('pageTitle');
-    document.querySelector('.sidebar').classList.remove('active-sidebar');
 
     if (hash.startsWith('#sign/')) {
         renderSignMode(hash.replace('#sign/', '').split(','));
@@ -42,7 +41,6 @@ async function handleRouting() {
             default: renderDashboard(main, title);
         }
     }
-    document.querySelectorAll('.nav-links li').forEach(li => li.classList.toggle('active', `#${li.dataset.page}` === hash.split('/')[0]));
     safeCreateIcons();
 }
 
@@ -73,76 +71,150 @@ function renderAssetList(main, title) {
     }
 
     main.innerHTML = `
-        <div class="list-header-actions" style="display:flex; flex-direction:column; gap:20px; margin-bottom:25px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                <div class="filter-tabs">
+        <div class="flex flex-col gap-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div class="flex flex-wrap gap-2">
                     ${['ALL', 'PC', 'NB', 'N'].map(c => {
         const count = c === 'ALL' ? assetsData.length : assetsData.filter(a => a.category === c).length;
-        return `<button class="tab ${currentFilter === c ? 'active' : ''}" onclick="window.setFilter('${c}')">${c} <span style="opacity:0.6; margin-left:4px; font-size:0.8rem;">(${count})</span></button>`;
+        const active = currentFilter === c;
+        return `
+                            <button onclick="window.setFilter('${c}')" 
+                                class="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2
+                                ${active ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10'}">
+                                ${c} <span class="opacity-60 text-xs font-normal">(${count})</span>
+                            </button>`;
     }).join('')}
                 </div>
-                <div class="search-box" style="position:relative; flex-grow:1; max-width:400px;">
-                    <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; color:var(--text-secondary);"></i>
-                    <input type="text" id="assetSearch" placeholder="搜尋保管人、品名或編號..." value="${searchQuery}" style="padding-left:40px; width:100%; height:45px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; color:white;">
-                </div>
-                <button class="btn-primary" onclick="window.location.hash='#add-asset'">+ 新增資產</button>
-            </div>
-            
-            <div id="batchActions" class="card" style="margin-bottom:0; padding:15px 25px; display:${selectedAssets.size > 0 ? 'flex' : 'none'}; align-items:center; justify-content:space-between; background:rgba(99, 102, 241, 0.1); border-color:var(--accent); flex-wrap:wrap; gap:15px;">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <span style="font-weight:600; color:var(--accent);">已選取 ${selectedAssets.size} 項資產</span>
-                    <button class="btn-outline" style="padding:5px 15px; font-size:0.8rem;" onclick="window.clearSelection()">取消全選</button>
-                </div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <input type="text" id="newCustodian" placeholder="新保管人" style="width:140px; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:white;">
-                    <input type="text" id="newLocation" placeholder="新地點" style="width:140px; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-dark); color:white;">
-                    <button class="btn-primary" style="padding:8px 20px; font-size:0.9rem;" onclick="window.batchUpdateAssets()">執行批次異動</button>
-                    <button class="btn-action" style="background:#ef4444; color:white; padding:8px 20px;" onclick="window.batchScrap()"><i data-lucide="trash-2"></i><span>批次報廢</span></button>
+                
+                <div class="flex items-center gap-4 flex-1 lg:max-w-md">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                        <input type="text" id="assetSearch" placeholder="搜尋保管人、品名或編號..." value="${searchQuery}" 
+                            class="w-full bg-[#0f172a] border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                    <button onclick="window.location.hash='#add-asset'" 
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/10 flex items-center gap-2 whitespace-nowrap transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i> 新增資產
+                    </button>
                 </div>
             </div>
             
-            <div style="display:flex; align-items:center; padding-left:15px;">
-                <input type="checkbox" id="selectAll" ${filtered.length > 0 && filtered.every(a => selectedAssets.has(a.id)) ? 'checked' : ''} onclick="window.toggleSelectAll(this.checked)" style="width:18px; height:18px; cursor:pointer;">
-                <label for="selectAll" style="margin-left:10px; cursor:pointer; font-size:0.9rem; color:var(--text-secondary);">全選目前列表 (${filtered.length})</label>
+            <div id="batchActions" class="${selectedAssets.size > 0 ? 'flex' : 'hidden'} items-center justify-between gap-4 bg-indigo-500/10 border border-indigo-500/30 p-4 rounded-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-500 text-white rounded-xl flex items-center justify-center font-black">
+                        ${selectedAssets.size}
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-indigo-400">已選取資產</p>
+                        <button onclick="window.clearSelection()" class="text-xs text-slate-500 hover:text-slate-300 underline decoration-dotted">取消全選</button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                    <input type="text" id="newCustodian" placeholder="新保管人" class="bg-[#0f172a] border border-white/5 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-indigo-500 w-32">
+                    <input type="text" id="newLocation" placeholder="新地點" class="bg-[#0f172a] border border-white/5 rounded-lg px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-indigo-500 w-32">
+                    <button onclick="window.batchUpdateAssets()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-500 transition-colors">批次變更</button>
+                    <button onclick="window.batchScrap()" class="bg-rose-500/20 text-rose-500 border border-rose-500/30 px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-500 hover:text-white transition-all flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i> 批次報廢
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 px-4 py-2 bg-white/3 rounded-xl w-fit">
+                <input type="checkbox" id="selectAll" ${filtered.length > 0 && filtered.every(a => selectedAssets.has(a.id)) ? 'checked' : ''} 
+                    onclick="window.toggleSelectAll(this.checked)" class="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0">
+                <label for="selectAll" class="text-xs font-medium text-slate-400 cursor-pointer">全選目前列表 (${filtered.length})</label>
             </div>
         </div>
 
-        <div class="asset-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
             ${filtered.map(a => {
         const latestSign = signData.find(s => s.item_ids.includes(a.asset_no));
         const isSelected = selectedAssets.has(a.id);
         return `
-                <div class="asset-card ${isSelected ? 'selected' : ''}" style="display:flex; flex-direction:column; position:relative;">
-                    <input type="checkbox" class="asset-checkbox" data-id="${a.id}" ${isSelected ? 'checked' : ''} onclick="window.toggleSelect('${a.id}')" style="position:absolute; top:20px; left:20px; width:20px; height:20px; z-index:5; cursor:pointer;">
+                <div class="group relative bg-[#1e293b] border border-white/5 rounded-3xl p-6 transition-all duration-300 hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-black/40 
+                    ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-500/5 border-transparent' : ''}">
                     
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-left:35px;">
-                        <div>
-                            <span class="asset-badge badge-${a.category.toLowerCase()}">${a.category}</span>
-                            <div class="asset-id" style="color:var(--accent); font-weight:700; font-family:monospace; font-size:1.1rem; margin:5px 0;">${a.asset_no}</div>
-                            <div class="asset-name" style="margin:5px 0 10px 0; font-size:1.1rem; height: auto; font-weight:600;">${a.name}</div>
-                            <div class="asset-info" style="font-size:0.85rem; color:var(--text-secondary);">
-                                <p><i data-lucide="user" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>保管人: ${a.custodian}</p>
-                                <p><i data-lucide="package" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>規格: ${a.spec || '-'}</p>
-                                <p><i data-lucide="map-pin" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>地點: ${a.location || '-'}</p>
-                                <p><i data-lucide="calendar" style="width:14px; display:inline-block; vertical-align:middle; margin-right:5px;"></i>採購日期: ${a.purchase_date || '-'}</p>
-                            </div>
+                    <!-- Selection Overlay -->
+                    <div class="absolute top-4 left-4 z-10 transition-opacity">
+                        <input type="checkbox" data-id="${a.id}" ${isSelected ? 'checked' : ''} onclick="window.toggleSelect('${a.id}')"
+                            class="w-5 h-5 rounded-lg border-white/10 bg-[#0f172a] text-indigo-500 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer shadow-lg transform transition-transform active:scale-90">
+                    </div>
+                    
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="pl-8">
+                            <span class="inline-block px-2.5 py-1 rounded-lg text-[0.65rem] font-black uppercase tracking-wider mb-2
+                                ${a.category === 'PC' ? 'bg-blue-500/20 text-blue-400' : a.category === 'NB' ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-500/20 text-slate-400'}">
+                                ${a.category}
+                            </span>
+                            <div class="text-xs font-mono font-bold text-indigo-400/80 mb-1 leading-none uppercase tracking-tighter">${a.asset_no}</div>
+                            <h3 class="text-lg font-bold text-white leading-tight mb-4 group-hover:text-indigo-300 transition-colors">${a.name}</h3>
                         </div>
-                        ${latestSign ? `<div class="card-sign-preview" onclick="window.previewSign('${latestSign.signature_img}')" title="點擊放大簽名" style="cursor:zoom-in;">
-                            <img src="${latestSign.signature_img}" style="width:80px; height:60px; background:white; border:2px solid #334155; border-radius:10px; padding:3px; object-fit:contain;">
-                            <p style="font-size:0.6rem; text-align:center; color:var(--accent); margin-top:3px; font-weight:700;">已簽收</p>
+                        ${latestSign ? `
+                        <div class="relative group/sign cursor-zoom-in" onclick="window.previewSign('${latestSign.signature_img}')">
+                            <div class="absolute -inset-2 bg-indigo-500/20 rounded-2xl blur opacity-0 group-hover/sign:opacity-100 transition-opacity"></div>
+                            <img src="${latestSign.signature_img}" class="relative w-20 h-14 bg-white rounded-xl p-1 shadow-xl border-2 border-slate-700 object-contain grayscale group-hover/sign:grayscale-0 transition-all">
+                            <p class="text-[0.6rem] text-center font-black text-indigo-400 mt-2 tracking-widest uppercase">E-Signed</p>
                         </div>` : ''}
                     </div>
-                    <div class="card-footer-actions" style="margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:10px;">
-                        <button class="btn-action edit-btn" style="flex:1;" onclick="window.location.hash='#edit/${a.id}'"><i data-lucide="edit-3"></i><span>編輯</span></button>
-                        <button class="btn-action" style="flex:1; color:#fdba74;" onclick="window.scrapAsset('${a.id}')"><i data-lucide="archive"></i><span>報廢</span></button>
-                        <button class="btn-action delete-btn" style="width:45px; flex:none;" onclick="window.deleteAsset('${a.id}')" title="永久刪除"><i data-lucide="trash-2"></i></button>
+
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center gap-3 text-sm">
+                            <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-500"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[0.6rem] text-slate-500 uppercase font-bold tracking-widest leading-none mb-1">Custodian</p>
+                                <p class="text-slate-200 font-semibold truncate">${a.custodian}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                <i data-lucide="package" class="w-4 h-4 text-slate-500"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[0.6rem] text-slate-500 uppercase font-bold tracking-widest leading-none mb-1">Spec</p>
+                                <p class="text-slate-400 truncate">${a.spec || '-'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                            <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-500"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[0.6rem] text-slate-500 uppercase font-bold tracking-widest leading-none mb-1">Office</p>
+                                <p class="text-slate-400 truncate">${a.location || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-4 border-t border-white/5 opacity-40 group-hover:opacity-100 transition-opacity">
+                        <button onclick="window.location.hash='#edit/${a.id}'" 
+                            class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-indigo-500/10 hover:text-indigo-400 rounded-xl text-xs font-bold transition-all">
+                            <i data-lucide="edit-3" class="w-3 h-3"></i> 編輯
+                        </button>
+                        <button onclick="window.scrapAsset('${a.id}')"
+                            class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl text-xs font-bold transition-all">
+                            <i data-lucide="archive" class="w-3 h-3"></i> 報廢
+                        </button>
+                        <button onclick="window.deleteAsset('${a.id}')"
+                            class="w-10 flex items-center justify-center py-2.5 bg-white/5 hover:bg-rose-500/10 hover:text-rose-400 rounded-xl transition-all">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </div>`;
     }).join('')}
+            ${filtered.length === 0 ? `
+                <div class="col-span-full py-20 flex flex-col items-center justify-center bg-white/3 rounded-[3rem] border-2 border-dashed border-white/5">
+                    <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
+                        <i data-lucide="database-zap" class="w-8 h-8 text-slate-700"></i>
+                    </div>
+                    <p class="text-slate-500 font-bold tracking-widest uppercase text-sm">No assets found</p>
+                    <p class="text-slate-600 text-xs mt-1">請嘗試調整篩選條件或關鍵字</p>
+                </div>
+            ` : ''}
         </div>
     `;
 
-    // 獲取當前是否有聚焦在搜尋框
     const wasFocused = document.activeElement && document.activeElement.id === 'assetSearch';
     const searchInput = document.getElementById('assetSearch');
 
@@ -253,11 +325,35 @@ function renderSignSuccess(ids, img) {
 function renderDashboard(main, title) {
     title.innerText = '儀表板';
     main.innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-card"><h3>在用資產</h3><p class="count">${assetsData.length}</p></div>
-            <div class="stat-card"><h3>報廢總數</h3><p class="count">${scrapData.length}</p></div>
-            <div class="stat-card"><h3>點收存單</h3><p class="count">${signData.length}</p></div>
-            <div class="stat-card" style="border-color:var(--accent);"><h3>異動紀錄</h3><p class="count">${transfersData.length}</p></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div class="bg-indigo-500/10 border border-indigo-500/20 p-8 rounded-[2.5rem] shadow-xl shadow-indigo-500/5 transition-transform hover:scale-[1.02]">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 bg-indigo-500 text-white rounded-2xl"><i data-lucide="database"></i></div>
+                    <p class="text-sm font-bold text-indigo-400 uppercase tracking-widest">在用資產</p>
+                </div>
+                <p class="text-5xl font-black text-white">${assetsData.length}</p>
+            </div>
+            <div class="bg-orange-500/10 border border-orange-500/20 p-8 rounded-[2.5rem] shadow-xl shadow-orange-500/5 transition-transform hover:scale-[1.02]">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 bg-orange-500 text-white rounded-2xl"><i data-lucide="trash-2"></i></div>
+                    <p class="text-sm font-bold text-orange-400 uppercase tracking-widest">報廢總數</p>
+                </div>
+                <p class="text-5xl font-black text-white">${scrapData.length}</p>
+            </div>
+            <div class="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/5 transition-transform hover:scale-[1.02]">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 bg-emerald-500 text-white rounded-2xl"><i data-lucide="file-signature"></i></div>
+                    <p class="text-sm font-bold text-emerald-400 uppercase tracking-widest">點收存單</p>
+                </div>
+                <p class="text-5xl font-black text-white">${signData.length}</p>
+            </div>
+            <div class="bg-purple-500/10 border border-purple-500/20 p-8 rounded-[2.5rem] shadow-xl shadow-purple-500/5 transition-transform hover:scale-[1.02]">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 bg-purple-500 text-white rounded-2xl"><i data-lucide="history"></i></div>
+                    <p class="text-sm font-bold text-purple-400 uppercase tracking-widest">異動紀錄</p>
+                </div>
+                <p class="text-5xl font-black text-white">${transfersData.length}</p>
+            </div>
         </div>
     `;
 }
@@ -265,31 +361,55 @@ function renderDashboard(main, title) {
 function renderAddAsset(main, title) {
     title.innerText = '新增財產資產';
     main.innerHTML = `
-        <div class="card">
-            <h3>資產建檔</h3>
-            <div class="form-grid">
-                <div class="form-group"><label>類別 (如 PC, NB, N)</label><select id="nc"><option value="PC">PC</option><option value="NB">NB</option><option value="N">N (其他)</option></select></div>
-                <div class="form-group"><label>品名</label><input type="text" id="nn"></div>
-            </div>
-            <div class="form-group">
-                <label>規格</label>
-                <input type="text" id="nsp" placeholder="例如: i7-13700 / 32G / 1TB">
-            </div>
-            <div class="form-grid">
-                <div class="form-group"><label>保管人</label><input type="text" id="nu"></div>
-                <div class="form-group"><label>地點</label><input type="text" id="nl"></div>
-            </div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>採購日期</label>
-                    <input type="date" id="npd" value="${new Date().toISOString().split('T')[0]}">
+        <div class="max-w-4xl bg-[#1e293b] border border-white/5 rounded-[3rem] p-8 lg:p-12 shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                <i data-lucide="plus-circle" class="text-indigo-400"></i> 資產建檔
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-500">類別 (PC, NB, N)</label>
+                    <select id="nc" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                        <option value="PC">PC (桌機)</option>
+                        <option value="NB">NB (筆電)</option>
+                        <option value="N">N (其他)</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label style="color:#fbbf24; font-weight:700;">一次新增數量 (1-20)</label>
-                    <input type="number" id="nq" value="1" min="1" max="20" style="background:rgba(251,191,36,0.1); border-color:#fbbf24;">
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-500">品名</label>
+                    <input type="text" id="nn" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                 </div>
             </div>
-            <button class="btn-primary" id="sS" style="width:100%; justify-content:center; margin-top:20px;">確認儲存並建立資產</button>
+            
+            <div class="space-y-2 mb-8">
+                <label class="block text-xs font-black uppercase tracking-widest text-slate-500">規格精確描述</label>
+                <input type="text" id="nsp" placeholder="例如: i7-13700 / 32G / 1TB" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-500">保管人</label>
+                    <input type="text" id="nu" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-500">存放地點</label>
+                    <input type="text" id="nl" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-500">採購日期</label>
+                    <input type="date" id="npd" value="${new Date().toISOString().split('T')[0]}" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-amber-500">一次新增數量 (1-20)</label>
+                    <input type="number" id="nq" value="1" min="1" max="20" class="w-full bg-amber-500/5 border border-amber-500/20 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-amber-500 outline-none transition-all text-amber-400 font-bold">
+                </div>
+            </div>
+
+            <button id="sS" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-500/10 flex items-center justify-center gap-3 transition-all active:scale-[0.98]">
+                <i data-lucide="cloud-upload"></i> 確認儲存並建立資產
+            </button>
         </div>`;
     document.getElementById('sS').onclick = async () => {
         const category = document.getElementById('nc').value;
@@ -349,31 +469,43 @@ function renderEditPage(id) {
 
     document.getElementById('pageTitle').innerText = `編輯資產：${a.asset_no}`;
     document.getElementById('mainSection').innerHTML = `
-        <div class="card">
-            <h3 style="margin-bottom:2rem;">資產內容修訂</h3>
-            <div class="form-group">
-                <label>品名</label>
-                <input type="text" id="en" value="${a.name}">
-            </div>
-            <div class="form-group">
-                <label>規格</label>
-                <input type="text" id="esp" value="${a.spec || ''}">
-            </div>
-            <div class="form-group">
-                <label>保管人 (異動將紀錄至日誌)</label>
-                <input type="text" id="eu" value="${a.custodian}">
-            </div>
-            <div class="form-group">
-                <label>地點</label>
-                <input type="text" id="el" value="${a.location || ''}">
-            </div>
-            <div class="form-group">
-                <label>採購日期</label>
-                <input type="date" id="ed" value="${a.purchase_date || ''}">
-            </div>
-            <div class="form-actions">
-                <button class="btn-primary" id="uB" style="flex:1; justify-content:center;">儲存變更</button>
-                <button class="btn-outline" onclick="window.location.hash='#assets'" style="flex:1;">取消</button>
+        <div class="max-w-4xl bg-[#1e293b] border border-white/5 rounded-[3rem] p-8 lg:p-12 shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-10 flex items-center gap-3">
+                <i data-lucide="edit-3" class="text-indigo-400"></i> 資產內容修訂
+            </h3>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-500">品名</label>
+                        <input type="text" id="en" value="${a.name}" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-500">規格</label>
+                        <input type="text" id="esp" value="${a.spec || ''}" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-indigo-400">保管人 (異動將紀錄至日誌)</label>
+                        <input type="text" id="eu" value="${a.custodian}" class="w-full bg-indigo-500/5 border border-indigo-500/20 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none text-indigo-200 font-bold">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-500">存放地點</label>
+                        <input type="text" id="el" value="${a.location || ''}" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-xs font-black uppercase tracking-widest text-slate-500">採購日期</label>
+                    <input type="date" id="ed" value="${a.purchase_date || ''}" class="w-full bg-[#0f172a] border border-white/10 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <div class="flex items-center gap-4 pt-6">
+                    <button id="uB" class="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-500/10 flex items-center justify-center gap-3 transition-all active:scale-[0.98]">
+                        儲存變更
+                    </button>
+                    <button onclick="window.location.hash='#assets'" class="flex-1 bg-white/5 hover:bg-white/10 text-slate-400 font-bold py-4 rounded-2xl transition-all">
+                        取消
+                    </button>
+                </div>
             </div>
         </div>`;
 
@@ -405,33 +537,44 @@ function renderEditPage(id) {
 function renderScrapping(main, title) {
     title.innerText = '報廢資產清冊';
     main.innerHTML = `
-        <div class="card" style="padding:0; overflow:hidden;">
-            <table class="data-table" style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#1e293b; text-align:left;">
-                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">編號/品名</th>
-                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">規格</th>
-                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">採購日期</th>
-                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">報廢時間</th>
-                        <th style="padding:12px; border-bottom:1px solid var(--border-color);">狀態</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${scrapData.map(s => `
-                        <tr>
-                            <td style="padding:12px; border-bottom:1px solid var(--border-color);">
-                                <div style="font-family:monospace; color:var(--accent);">${s.asset_no}</div>
-                                <div style="font-size:0.85rem;">${s.name}</div>
-                            </td>
-                            <td style="padding:12px; border-bottom:1px solid var(--border-color); font-size:0.85rem;">${s.spec || '-'}</td>
-                            <td style="padding:12px; border-bottom:1px solid var(--border-color); font-size:0.85rem;">${s.purchase_date || '-'}</td>
-                            <td style="padding:12px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); font-size:0.85rem;">${s.timestamp?.toDate ? s.timestamp.toDate().toLocaleString() : 'N/A'}</td>
-                            <td style="padding:12px; border-bottom:1px solid var(--border-color);"><span style="background:rgba(239,68,68,0.1); color:#ef4444; padding:2px 10px; border-radius:20px; font-size:0.75rem;">已報廢</span></td>
+        <div class="bg-[#1e293b] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 text-slate-500 text-[0.65rem] font-black uppercase tracking-[0.2em]">
+                            <th class="px-8 py-5">編號/品名</th>
+                            <th class="px-8 py-5">規格概略</th>
+                            <th class="px-8 py-5">採購日期</th>
+                            <th class="px-8 py-5">報廢時間點</th>
+                            <th class="px-8 py-5">處理狀態</th>
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            ${scrapData.length === 0 ? '<p style="padding:40px; text-align:center; color:var(--text-secondary);">目前無報廢紀錄</p>' : ''}
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        ${scrapData.map(s => `
+                            <tr class="hover:bg-white/3 transition-colors">
+                                <td class="px-8 py-6">
+                                    <div class="font-mono text-indigo-400 font-bold mb-1">${s.asset_no}</div>
+                                    <div class="text-sm font-semibold text-white">${s.name}</div>
+                                </td>
+                                <td class="px-8 py-6 text-sm text-slate-400">${s.spec || '-'}</td>
+                                <td class="px-8 py-6 text-sm text-slate-400">${s.purchase_date || '-'}</td>
+                                <td class="px-8 py-6 text-sm text-slate-500 font-mono italic">${s.timestamp?.toDate ? s.timestamp.toDate().toLocaleString() : 'N/A'}</td>
+                                <td class="px-8 py-6">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-full text-[0.65rem] font-bold uppercase tracking-wider">
+                                        <i data-lucide="x-circle" class="w-3 h-3"></i> 已報廢
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${scrapData.length === 0 ? `
+                <div class="py-20 flex flex-col items-center justify-center italic text-slate-600">
+                    <i data-lucide="package-x" class="w-12 h-12 mb-4 opacity-20"></i>
+                    目前暫無資產報廢紀錄
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -439,57 +582,82 @@ function renderScrapping(main, title) {
 function renderSignHistory(main, title) {
     title.innerText = '手寫點收紀錄';
     main.innerHTML = `
-        <div class="asset-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             ${signData.map(s => `
-                <div class="asset-card" style="padding:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                <div class="bg-[#1e293b] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl hover:border-emerald-500/30 transition-all group">
+                    <div class="flex justify-between items-start mb-6">
                         <div>
-                            <div style="color:var(--accent); font-size:0.8rem; font-weight:600; margin-bottom:5px;">簽收單據</div>
-                            <div style="font-size:0.9rem; font-weight:700;">簽收編號: ${s.item_ids}</div>
-                            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:5px;">時間: ${s.timestamp?.toDate ? s.timestamp.toDate().toLocaleString() : 'N/A'}</div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full text-[0.65rem] font-bold uppercase tracking-widest mb-3">
+                                <i data-lucide="file-check" class="w-3 h-3"></i> 簽收單據
+                            </span>
+                            <div class="text-sm font-black text-white leading-tight uppercase tracking-tight">${s.item_ids}</div>
+                            <div class="text-[0.65rem] text-slate-500 font-mono mt-2 italic">${s.timestamp?.toDate ? s.timestamp.toDate().toLocaleString() : 'N/A'}</div>
                         </div>
                     </div>
-                    <div style="background:white; border-radius:12px; padding:10px; display:flex; justify-content:center; align-items:center;">
-                        <img src="${s.signature_img}" style="max-width:100%; height:120px; object-fit:contain;">
+                    <div class="bg-white rounded-2xl p-4 flex justify-center items-center shadow-inner h-40 group-hover:scale-[1.02] transition-transform">
+                        <img src="${s.signature_img}" class="max-w-full max-h-full object-contain">
                     </div>
-                    <div style="margin-top:15px; display:flex; justify-content:flex-end;">
-                        <button class="btn-outline" style="padding:5px 12px; font-size:0.8rem;" onclick="window.previewSign('${s.signature_img}')">查看原始大小</button>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="window.previewSign('${s.signature_img}')" 
+                            class="px-4 py-2 bg-white/5 hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all">
+                            View Original
+                        </button>
                     </div>
                 </div>
             `).join('')}
         </div>
-        ${signData.length === 0 ? '<div class="card" style="text-align:center; color:var(--text-secondary);">尚未有任何簽收紀錄</div>' : ''}
+        ${signData.length === 0 ? `
+            <div class="py-20 flex flex-col items-center justify-center bg-white/3 rounded-[3rem] border-2 border-dashed border-white/5 italic text-slate-600">
+                尚未有任何數位簽收紀錄
+            </div>
+        ` : ''}
     `;
 }
 
 function renderTransferHistory(main, title) {
     title.innerText = '保管人異動明細';
     main.innerHTML = `
-        <div class="card" style="padding:0; overflow:hidden;">
-            <table class="data-table" style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#1e293b; text-align:left;">
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">時間</th>
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">資產編號 / 品名</th>
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">原保管人</th>
-                        <th style="padding:15px; border-bottom:1px solid var(--border-color);">→ 新保管人</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${transfersData.map(t => `
-                        <tr>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color); font-size:0.85rem; color:var(--text-secondary);">${t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : 'N/A'}</td>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color);">
-                                <div style="font-family:monospace; color:var(--accent);">${t.asset_no}</div>
-                                <div style="font-size:0.8rem;">${t.name}</div>
-                            </td>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color); color:var(--danger);">${t.from || '-'}</td>
-                            <td style="padding:15px; border-bottom:1px solid var(--border-color); color:var(--success); font-weight:700;">${t.to}</td>
+        <div class="bg-[#1e293b] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 text-slate-500 text-[0.65rem] font-black uppercase tracking-[0.2em]">
+                            <th class="px-8 py-5">異動時間</th>
+                            <th class="px-8 py-5">資產編號 / 品名</th>
+                            <th class="px-8 py-5">原保管人</th>
+                            <th class="px-8 py-5">目標保管人</th>
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            ${transfersData.length === 0 ? '<p style="padding:40px; text-align:center; color:var(--text-secondary);">尚未有異動紀錄</p>' : ''}
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        ${transfersData.map(t => `
+                            <tr class="hover:bg-white/3 transition-colors">
+                                <td class="px-8 py-6 text-[0.65rem] text-slate-500 font-mono italic">
+                                    ${t.timestamp?.toDate ? t.timestamp.toDate().toLocaleString() : 'N/A'}
+                                </td>
+                                <td class="px-8 py-6">
+                                    <div class="font-mono text-indigo-400 font-bold mb-1 leading-none uppercase tracking-tighter">${t.asset_no}</div>
+                                    <div class="text-sm font-semibold text-white">${t.name}</div>
+                                </td>
+                                <td class="px-8 py-6">
+                                    <div class="px-3 py-1 bg-rose-500/10 text-rose-400 rounded-lg text-xs inline-block line-through opacity-60">
+                                        ${t.from || '-'}
+                                    </div>
+                                </td>
+                                <td class="px-8 py-6">
+                                    <div class="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-black inline-flex items-center gap-2">
+                                        <i data-lucide="arrow-right" class="w-3 h-3"></i> ${t.to}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${transfersData.length === 0 ? `
+                <div class="py-20 flex flex-col items-center justify-center italic text-slate-600">
+                    目前尚未有資產轉移異動紀錄
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -501,27 +669,42 @@ function renderSignManager(main, title) {
     const redraw = () => {
         const list = smFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === smFilter);
         main.innerHTML = `
-            <div class="card">
-                <div style="margin-bottom:20px;">
-                    <h3 style="margin-bottom:15px;">1. 篩選資產類別</h3>
-                    <div class="filter-tabs">
-                        ${['ALL', 'PC', 'NB', 'N'].map(c => `<button class="tab ${smFilter === c ? 'active' : ''}" id="smf-${c}">${c}</button>`).join('')}
+            <div class="max-w-4xl bg-[#1e293b] border border-white/5 rounded-[3rem] p-8 lg:p-12 shadow-2xl">
+                <div class="mb-10">
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">1. 篩選資產類別</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${['ALL', 'PC', 'NB', 'N'].map(c => `
+                            <button id="smf-${c}" class="px-5 py-2 rounded-xl text-sm font-bold transition-all
+                                ${smFilter === c ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'}">${c}</button>
+                        `).join('')}
                     </div>
                 </div>
-                <div style="margin-bottom:25px; max-height:400px; overflow-y:auto; border:1px solid var(--border-color); border-radius:12px; padding:15px; background:rgba(0,0,0,0.1);">
-                    <h3 style="margin-bottom:15px;">2. 勾選資產編號</h3>
-                    ${list.length === 0 ? '<p style="color:var(--text-secondary); text-align:center;">該分類下無資產</p>' : list.map(a => `
-                        <label style="display:flex; align-items:center; gap:12px; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; color:#e2e8f0;">
-                            <input type="checkbox" class="sc" value="${a.asset_no}" style="width:18px; height:18px;">
-                            <span style="font-family:monospace; color:var(--accent);">${a.asset_no}</span>
-                            <span style="font-size:0.9rem;">- ${a.name}</span>
-                        </label>
-                    `).join('')}
+                
+                <div class="mb-10">
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">2. 勾選資產編號</h3>
+                    <div class="max-h-[350px] overflow-y-auto border border-white/10 rounded-2xl p-4 bg-[#0f172a] divide-y divide-white/5">
+                        ${list.length === 0 ? '<p class="py-10 text-center text-slate-600 italic">該分類下目前無在用資產</p>' : list.map(a => `
+                            <label class="flex items-center gap-4 p-4 hover:bg-white/3 cursor-pointer group transition-colors">
+                                <input type="checkbox" class="sc w-5 h-5 rounded border-white/10 bg-white/5 text-indigo-500 focus:ring-indigo-500" value="${a.asset_no}">
+                                <span class="font-mono font-black text-indigo-400 group-hover:text-indigo-300 transition-colors uppercase tracking-widest">${a.asset_no}</span>
+                                <span class="text-sm text-slate-300 font-semibold">${a.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
                 </div>
-                <button class="btn-primary" id="gB" style="width:100%; justify-content:center; height:50px;">3. 建立並複製點收網址</button>
-                <div id="uz" class="hidden" style="margin-top:20px; padding:15px; background:rgba(34,197,94,0.1); border-radius:12px; border:1px solid #22c55e;">
-                    <p style="color:#22c55e; font-size:0.85rem; font-weight:700; margin-bottom:10px;">✅ 網址已複製到剪貼簿</p>
-                    <code id="uv" style="word-break:break-all; font-size:0.8rem; color:#86efac;"></code>
+
+                <div class="space-y-6">
+                    <button id="gB" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-500/10 flex items-center justify-center gap-3 transition-all active:scale-[0.98]">
+                        <i data-lucide="link"></i> 建立並複製點收網址
+                    </button>
+                    
+                    <div id="uz" class="hidden animate-in zoom-in-95 duration-300 p-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-3 text-emerald-400">
+                            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                            <p class="text-sm font-black uppercase tracking-widest">網址已複製到剪貼簿</p>
+                        </div>
+                        <code id="uv" class="block w-full p-4 bg-black/40 rounded-xl text-xs text-emerald-300 font-mono break-all leading-relaxed border border-white/5"></code>
+                    </div>
                 </div>
             </div>
         `;
@@ -544,143 +727,148 @@ function renderSignManager(main, title) {
 }
 
 function checkAuth() { sessionStorage.getItem('isAdmin') === 'true' ? document.getElementById('loginOverlay').style.display = 'none' : document.getElementById('loginOverlay').style.display = 'flex'; }
+
 function initNavigation() {
     document.getElementById('loginBtn').onclick = () => { if (document.getElementById('adminPassword').value === '671230') { sessionStorage.setItem('isAdmin', 'true'); checkAuth(); } else { document.getElementById('loginError').classList.remove('hidden'); } };
-    document.querySelectorAll('.nav-links li').forEach(li => li.onclick = () => { window.location.hash = '#' + li.dataset.page; });
-
-    // 全域輔助函數
-    window.setFilter = (c) => { currentFilter = c; handleRouting(); };
-
-    window.toggleSelect = (id) => {
-        if (selectedAssets.has(id)) selectedAssets.delete(id);
-        else selectedAssets.add(id);
-        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-    };
-
-    window.toggleSelectAll = (checked) => {
-        const filtered = currentFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === currentFilter);
-        const q = searchQuery.toLowerCase();
-        const searchFiltered = searchQuery ? filtered.filter(a =>
-            (a.custodian || '').toLowerCase().includes(q) ||
-            (a.name || '').toLowerCase().includes(q) ||
-            (a.asset_no || '').toLowerCase().includes(q) ||
-            (a.location || '').toLowerCase().includes(q)
-        ) : filtered;
-
-        if (checked) searchFiltered.forEach(a => selectedAssets.add(a.id));
-        else searchFiltered.forEach(a => selectedAssets.delete(a.id));
-
-        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-    };
-
-    window.clearSelection = () => {
-        selectedAssets.clear();
-        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-    };
-
-    window.batchUpdateAssets = async () => {
-        const newVal = document.getElementById('newCustodian').value;
-        const newLoc = document.getElementById('newLocation').value;
-        if (!newVal && !newLoc) return alert("請至少輸入一項（新保管人或新地點）");
-
-        let confirmMsg = `確定要將這 ${selectedAssets.size} 項資產進行異動嗎？`;
-        if (newVal) confirmMsg += `\n- 新保管人: ${newVal}`;
-        if (newLoc) confirmMsg += `\n- 新地點: ${newLoc}`;
-
-        if (!confirm(confirmMsg)) return;
-
-        try {
-            const list = Array.from(selectedAssets);
-            for (const id of list) {
-                const a = assetsData.find(x => x.id === id);
-                const updateData = {};
-                if (newVal && a.custodian !== newVal) {
-                    updateData.custodian = newVal;
-                    await FIREBASE_API.addTransfer({
-                        asset_no: a.asset_no,
-                        name: a.name,
-                        from: a.custodian,
-                        to: newVal,
-                        reason: '批次異動'
-                    });
-                }
-                if (newLoc) updateData.location = newLoc;
-
-                if (Object.keys(updateData).length > 0) {
-                    await FIREBASE_API.updateAsset(id, updateData);
-                }
-            }
-            alert("✅ 批次變更成功");
-            selectedAssets.clear();
-            await refreshData();
-            renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-        } catch (e) { alert("變更失敗: " + e.message); }
-    };
-
-    window.deleteAsset = async (id) => {
-        const a = assetsData.find(x => x.id === id);
-        if (!confirm(`確定要「永久刪除」資產 ${a.asset_no} (${a.name}) 嗎？\n此動作不可復原！`)) return;
-        try {
-            await FIREBASE_API.deleteAsset(id);
-            alert("已刪除");
-            await refreshData();
-            renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-        } catch (e) { alert("刪除失敗"); }
-    };
-
-    window.batchScrap = async () => {
-        if (!confirm(`確定要將這 ${selectedAssets.size} 項資產報廢嗎？注意：此操作無法復原。`)) return;
-        try {
-            const list = Array.from(selectedAssets);
-            for (const id of list) {
-                const a = assetsData.find(x => x.id === id);
-                if (a) {
-                    await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name, spec: a.spec || '', purchase_date: a.purchase_date || '' });
-                    await FIREBASE_API.deleteAsset(id);
-                }
-            }
-            alert("✅ 批次報廢完成");
-            selectedAssets.clear();
-            await refreshData();
-            renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-        } catch (e) { alert("報廢過程出錯: " + e.message); }
-    };
-
-    window.scrapAsset = async (id) => {
-        const a = assetsData.find(x => x.id === id);
-        if (!confirm(`確定要將資產 ${a.asset_no} (${a.name}) 報廢嗎？`)) return;
-        try {
-            await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name, spec: a.spec || '', purchase_date: a.purchase_date || '' });
-            await FIREBASE_API.deleteAsset(id);
-            alert("報廢成功");
-            await refreshData();
-            renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
-        } catch (e) { alert("報廢失敗"); }
-    };
-
-    window.clearAllDatabaseRecords = async () => {
-        if (!confirm("🚨 警告：確定要清空資料庫中「所有」的資產、報廢、簽名、以及異動紀錄嗎？\n此動作發生後資料將永遠消失，無法復原！")) return;
-        if (prompt("請輸入 'RESET' 以確認執行 (全大寫)：") !== 'RESET') return alert("取消操作");
-
-        try {
-            const b = document.querySelector('button[onclick="window.clearAllDatabaseRecords()"]');
-            b.innerText = '正在強力清空中，請勿重新整理...'; b.disabled = true;
-
-            for (const a of assetsData) await FIREBASE_API.deleteAsset(a.id);
-            for (const s of scrapData) await FIREBASE_API.deleteScrap(s.id);
-            for (const si of signData) await FIREBASE_API.deleteSignature(si.id);
-            for (const t of transfersData) await FIREBASE_API.deleteTransfer(t.id);
-
-            alert("✅ 全系統資料已清空歸零。");
-            selectedAssets.clear();
-            await refreshData();
-            handleRouting();
-        } catch (e) {
-            alert("清空過程失敗: " + e.message);
-        }
-    };
-
-    document.getElementById('mobileMenuBtn').onclick = () => document.querySelector('.sidebar').classList.add('active-sidebar');
 }
+
+// 全域輔助函數
+window.setFilter = (c) => { currentFilter = c; handleRouting(); };
+
+window.toggleSelect = (id) => {
+    if (selectedAssets.has(id)) selectedAssets.delete(id);
+    else selectedAssets.add(id);
+    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+};
+
+window.toggleSelectAll = (checked) => {
+    const filtered = currentFilter === 'ALL' ? assetsData : assetsData.filter(a => a.category === currentFilter);
+    const q = searchQuery.toLowerCase();
+    const searchFiltered = searchQuery ? filtered.filter(a =>
+        (a.custodian || '').toLowerCase().includes(q) ||
+        (a.name || '').toLowerCase().includes(q) ||
+        (a.asset_no || '').toLowerCase().includes(q) ||
+        (a.location || '').toLowerCase().includes(q)
+    ) : filtered;
+
+    if (checked) searchFiltered.forEach(a => selectedAssets.add(a.id));
+    else searchFiltered.forEach(a => selectedAssets.delete(a.id));
+
+    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+};
+
+window.clearSelection = () => {
+    selectedAssets.clear();
+    renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+};
+
+window.batchUpdateAssets = async () => {
+    const newVal = document.getElementById('newCustodian').value;
+    const newLoc = document.getElementById('newLocation').value;
+    if (!newVal && !newLoc) return alert("請至少輸入一項（新保管人或新地點）");
+
+    let confirmMsg = `確定要將這 ${selectedAssets.size} 項資產進行異動嗎？`;
+    if (newVal) confirmMsg += `\n- 新保管人: ${newVal}`;
+    if (newLoc) confirmMsg += `\n- 新地點: ${newLoc}`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const list = Array.from(selectedAssets);
+        for (const id of list) {
+            const a = assetsData.find(x => x.id === id);
+            const updateData = {};
+            if (newVal && a.custodian !== newVal) {
+                updateData.custodian = newVal;
+                await FIREBASE_API.addTransfer({
+                    asset_no: a.asset_no,
+                    name: a.name,
+                    from: a.custodian,
+                    to: newVal,
+                    reason: '批次異動'
+                });
+            }
+            if (newLoc) updateData.location = newLoc;
+
+            if (Object.keys(updateData).length > 0) {
+                await FIREBASE_API.updateAsset(id, updateData);
+            }
+        }
+        alert("✅ 批次變更成功");
+        selectedAssets.clear();
+        await refreshData();
+        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+    } catch (e) { alert("變更失敗: " + e.message); }
+};
+
+window.deleteAsset = async (id) => {
+    const a = assetsData.find(x => x.id === id);
+    if (!confirm(`確定要「永久刪除」資產 ${a.asset_no} (${a.name}) 嗎？\n此動作不可復原！`)) return;
+    try {
+        await FIREBASE_API.deleteAsset(id);
+        alert("已刪除");
+        await refreshData();
+        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+    } catch (e) { alert("刪除失敗"); }
+};
+
+window.batchScrap = async () => {
+    if (!confirm(`確定要將這 ${selectedAssets.size} 項資產報廢嗎？注意：此操作無法復原。`)) return;
+    try {
+        const list = Array.from(selectedAssets);
+        for (const id of list) {
+            const a = assetsData.find(x => x.id === id);
+            if (a) {
+                await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name, spec: a.spec || '', purchase_date: a.purchase_date || '' });
+                await FIREBASE_API.deleteAsset(id);
+            }
+        }
+        alert("✅ 批次報廢完成");
+        selectedAssets.clear();
+        await refreshData();
+        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+    } catch (e) { alert("報廢過程出錯: " + e.message); }
+};
+
+window.scrapAsset = async (id) => {
+    const a = assetsData.find(x => x.id === id);
+    if (!confirm(`確定要將資產 ${a.asset_no} (${a.name}) 報廢嗎？`)) return;
+    try {
+        await FIREBASE_API.addScrap({ asset_no: a.asset_no, name: a.name, spec: a.spec || '', purchase_date: a.purchase_date || '' });
+        await FIREBASE_API.deleteAsset(id);
+        alert("報廢成功");
+        await refreshData();
+        renderAssetList(document.getElementById('mainSection'), document.getElementById('pageTitle'));
+    } catch (e) { alert("報廢失敗"); }
+};
+
+window.clearAllDatabaseRecords = async () => {
+    if (!confirm("🚨 警告：確定要清空資料庫中「所有」的資產、報廢、簽名、以及異動紀錄嗎？\n此動作發生後資料將永遠消失，無法復原！")) return;
+    if (prompt("請輸入 'RESET' 以確認執行 (全大寫)：") !== 'RESET') return alert("取消操作");
+
+    try {
+        const b = document.querySelector('button[onclick="window.clearAllDatabaseRecords()"]');
+        b.innerText = '正在強力清空中，請勿重新整理...'; b.disabled = true;
+
+        for (const a of assetsData) await FIREBASE_API.deleteAsset(a.id);
+        for (const s of scrapData) await FIREBASE_API.deleteScrap(s.id);
+        for (const si of signData) await FIREBASE_API.deleteSignature(si.id);
+        for (const t of transfersData) await FIREBASE_API.deleteTransfer(t.id);
+
+        alert("✅ 全系統資料已清空歸零。");
+        selectedAssets.clear();
+        await refreshData();
+        handleRouting();
+    } catch (e) {
+        alert("清空過程失敗: " + e.message);
+    }
+};
+
+function initNavigation() {
+    document.getElementById('loginBtn').onclick = () => { if (document.getElementById('adminPassword').value === '671230') { sessionStorage.setItem('isAdmin', 'true'); checkAuth(); } else { document.getElementById('loginError').classList.remove('hidden'); } };
+}
+
+// 全域輔助函數
+window.setFilter = (c) => { currentFilter = c; handleRouting(); };
 
 function safeCreateIcons() { if (window.lucide) window.lucide.createIcons(); else setTimeout(safeCreateIcons, 200); }
